@@ -189,6 +189,33 @@ int write_bones(FILE *bc_m2_file, BCM2 *ptr) {
 	return 0;
 }
 
+int write_texanims(FILE *bc_m2_file, BCM2 *ptr) {
+	if (ptr->header.nTexAnims > 0) {
+		ptr->header.ofsTexAnims = getPos(bc_m2_file);
+		fwrite(ptr->texanims, sizeof(TextureAnimation), ptr->header.nTexAnims,
+				bc_m2_file);
+		align(bc_m2_file);
+		int i;
+		for (i = 0; i < ptr->header.nTexAnims; i++) {
+			//translation
+			write_Vec3DAnimBlock(bc_m2_file, &ptr->texanims[i].trans,
+					&ptr->texdata[i].trans);
+
+			//rotation
+			write_QuatAnimBlock(bc_m2_file, &ptr->texanims[i].rot,
+					&ptr->texdata[i].rot);
+
+			//scaling
+			write_Vec3DAnimBlock(bc_m2_file, &ptr->texanims[i].scal,
+					&ptr->texdata[i].scal);
+		}
+	}
+	fseek(bc_m2_file, ptr->header.ofsTexAnims, SEEK_SET);
+	fwrite(ptr->texanims, sizeof(TextureAnimation), ptr->header.nTexAnims, bc_m2_file);
+	fseek(bc_m2_file, 0, SEEK_END);
+	return 0;
+}
+
 int write_cameras(FILE *bc_m2_file, BCM2 *ptr) {
 	if (ptr->header.nCameras > 0) {
 		ptr->header.ofsCameras = getPos(bc_m2_file);
@@ -470,6 +497,9 @@ int write_model(FILE *bc_m2_file, BCM2 *ptr) {
 				bc_m2_file);
 		align(bc_m2_file);
 	}
+
+	//TexAnims
+	write_texanims(bc_m2_file, ptr);
 
 	//Rewrite the header with updated offsets
 	fseek(bc_m2_file, 0, SEEK_SET);

@@ -6,6 +6,41 @@
 #include <stdio.h>
 #include "printer.h"
 
+short tt_init = 0;
+char *textypes[19];
+void init_textypes() {
+	textypes[0] = "Hardcoded";
+	textypes[1] = "Skin -- Body and clothes";
+	textypes[2] = "Object Skin -- Item, Capes";
+	textypes[3] = "Weapon Blade -- Possibly Armor Reflect";
+	textypes[4] = "Weapon Handle";
+	textypes[5] = "Environment";
+	textypes[6] = "Character Hair";
+	textypes[7] = "Character Facial Hair";
+	textypes[8] = "Skin Extra";
+	textypes[9] = "UI Skin";
+	textypes[10] = "Tauren Mane";
+	textypes[11] = "Monster Skin 1 -- Skin for Creatures or GameObjects";
+	textypes[12] = "Monster Skin 2 -- Skin for Creatures or GameObjects";
+	textypes[13] = "Monster Skin 3 -- Skin for Creatures or GameObjects";
+	textypes[14] = "Item Icon";
+	textypes[15] = "Guild Background Color";
+	textypes[16] = "Guild Emblem Color";
+	textypes[17] = "Guild Border Color";
+	textypes[18] = "Guild Emblem";
+	tt_init = 1;
+}
+char* get_textype(int i) {
+	if (i < 19) {
+		if (tt_init == 0) {
+			init_textypes();
+		}
+		return textypes[i];
+	} else {
+		return "Unknown";
+	}
+}
+
 /**
  * Print animations of a M2/WotLK model.
  * @param model The M2/WotLK structure.
@@ -308,7 +343,6 @@ void print_events_lk(LKM2 model) {
 void print_events_bc(BCM2 model) {
 	int i;
 	for (i = 0; i < model.header.nEvents; i++) {
-		int j;
 		printf("[Event #%d]\n", i);
 		printf("ID: %s\n", model.events[i].ID);
 		printf("Data: %d\n", model.events[i].data);
@@ -321,6 +355,7 @@ void print_events_bc(BCM2 model) {
 		//Content
 		if (model.events[i].timer.Ranges.n > 0) {
 			printf("\tRanges:\n");
+			int j;
 			for (j = 0; j < model.events[i].timer.Ranges.n; j++) {
 				printf("\t(%d,%d)\n", model.eventsdata[i].ranges[j][0],
 						model.eventsdata[i].ranges[j][1]);
@@ -329,6 +364,7 @@ void print_events_bc(BCM2 model) {
 		}
 		if (model.events[i].timer.Times.n > 0) {
 			printf("\tTimes:\n");
+			int j;
 			for (j = 0; j < model.events[i].timer.Times.n; j++) {
 				printf("\t%d\n", model.eventsdata[i].times[j]);
 			}
@@ -411,13 +447,113 @@ void print_playanimlookup(BCM2 model) {
 void print_texnames_bc(BCM2 model) {
 	int i;
 	for (i = 0; i < model.header.nTextures; i++) {
-		printf("[Texture #%d]\n\t%s\n", i, model.texture_names[i]);
+		printf("[Texture #%d]\n", i);
+		if (model.textures_def[i].type == 0) {
+			printf("\t%s\n", model.texture_names[i]);
+		} else {
+			printf(
+					"\tDefined by DBC files CharSections.dbc, CreatureDisplayInfo.dbc or ItemDisplayInfo.dbc.\n");
+			printf("\tType : %s.\n", get_textype(model.textures_def[i].type));
+		}
 	}
+	printf("\n");
 }
 void print_texnames_lk(LKM2 model) {
 	int i;
 	for (i = 0; i < model.header.nTextures; i++) {
-		printf("[Texture #%d]\n\t%s\n", i, model.texture_names[i]);
+		printf("[Texture #%d]\n", i);
+		if (model.textures_def[i].type == 0) {
+			printf("\t%s\n", model.texture_names[i]);
+		} else {
+			printf(
+					"\tDefined by DBC files CharSections.dbc, CreatureDisplayInfo.dbc or ItemDisplayInfo.dbc.\n");
+			printf("\tType : %s\n", get_textype(model.textures_def[i].type));
+		}
+	}
+}
+
+void print_boneheaders_lk(LKM2 model) {
+	int i;
+	for (i = 0; i < model.header.nBones; i++) {
+		printf("[Bone #%d]\n", i);
+		printf("ID: %d\n", model.bones[i].animid);
+		printf("Flags: %d\n", model.bones[i].flags);
+		printf("ParentBone: %d\n", model.bones[i].parent);
+		printf("SubmeshID: %d\n", model.bones[i].geoid);
+		printf("Unknown: %d\n", model.bones[i].unk);
+
+		printf("[Translation]\n");
+		printf("\tType: %d\n", model.bones[i].trans.type);
+		printf("\tSeq: %d\n", model.bones[i].trans.seq);
+		printf("\tNumber of times: %d\n", model.bones[i].trans.Times.n);
+		printf("\tOffset of times: %d\n", model.bones[i].trans.Times.ofs);
+		printf("\tNumber of keys: %d\n", model.bones[i].trans.Keys.n);
+		printf("\tOffset of keys: %d\n", model.bones[i].trans.Keys.ofs);
+
+		printf("[Rotation]\n");
+		printf("\tType: %d\n", model.bones[i].rot.type);
+		printf("\tSeq: %d\n", model.bones[i].rot.seq);
+		printf("\tNumber of times: %d\n", model.bones[i].rot.Times.n);
+		printf("\tOffset of times: %d\n", model.bones[i].rot.Times.ofs);
+		printf("\tNumber of keys: %d\n", model.bones[i].rot.Keys.n);
+		printf("\tOffset of keys: %d\n", model.bones[i].rot.Keys.ofs);
+
+		printf("[Scaling]\n");
+		printf("\tType: %d\n", model.bones[i].scal.type);
+		printf("\tSeq: %d\n", model.bones[i].scal.seq);
+		printf("\tNumber of times: %d\n", model.bones[i].scal.Times.n);
+		printf("\tOffset of times: %d\n", model.bones[i].scal.Times.ofs);
+		printf("\tNumber of keys: %d\n", model.bones[i].scal.Keys.n);
+		printf("\tOffset of keys: %d\n", model.bones[i].scal.Keys.ofs);
+
+		printf("Pivot Vector: (%f,%f,%f)\n", model.bones[i].pivot[0],
+				model.bones[i].pivot[1], model.bones[i].pivot[2]);
+		printf("\n");
+	}
+}
+void print_boneheaders_bc(BCM2 model) {
+	int i;
+	for (i = 0; i < model.header.nBones; i++) {
+		printf("[Bone #%d]\n", i);
+		printf("ID: %d\n", model.bones[i].animid);
+		printf("Flags: %d\n", model.bones[i].flags);
+		printf("ParentBone: %d\n", model.bones[i].parent);
+		printf("SubmeshID: %d\n", model.bones[i].geoid);
+		printf("Unknown: %d\n", model.bones[i].unk);
+
+		printf("[Translation]\n");
+		printf("\tType: %d\n", model.bones[i].trans.type);
+		printf("\tSeq: %d\n", model.bones[i].trans.seq);
+		printf("\tNumber of ranges: %d\n", model.bones[i].trans.Ranges.n);
+		printf("\tOffset of ranges: %d\n", model.bones[i].trans.Ranges.ofs);
+		printf("\tNumber of times: %d\n", model.bones[i].trans.Times.n);
+		printf("\tOffset of times: %d\n", model.bones[i].trans.Times.ofs);
+		printf("\tNumber of keys: %d\n", model.bones[i].trans.Keys.n);
+		printf("\tOffset of keys: %d\n", model.bones[i].trans.Keys.ofs);
+
+		printf("[Rotation]\n");
+		printf("\tType: %d\n", model.bones[i].rot.type);
+		printf("\tSeq: %d\n", model.bones[i].rot.seq);
+		printf("\tNumber of ranges: %d\n", model.bones[i].rot.Ranges.n);
+		printf("\tOffset of ranges: %d\n", model.bones[i].rot.Ranges.ofs);
+		printf("\tNumber of times: %d\n", model.bones[i].rot.Times.n);
+		printf("\tOffset of times: %d\n", model.bones[i].rot.Times.ofs);
+		printf("\tNumber of keys: %d\n", model.bones[i].rot.Keys.n);
+		printf("\tOffset of keys: %d\n", model.bones[i].rot.Keys.ofs);
+
+		printf("[Scaling]\n");
+		printf("\tType: %d\n", model.bones[i].scal.type);
+		printf("\tSeq: %d\n", model.bones[i].scal.seq);
+		printf("\tNumber of ranges: %d\n", model.bones[i].scal.Ranges.n);
+		printf("\tOffset of ranges: %d\n", model.bones[i].scal.Ranges.ofs);
+		printf("\tNumber of times: %d\n", model.bones[i].scal.Times.n);
+		printf("\tOffset of times: %d\n", model.bones[i].scal.Times.ofs);
+		printf("\tNumber of keys: %d\n", model.bones[i].scal.Keys.n);
+		printf("\tOffset of keys: %d\n", model.bones[i].scal.Keys.ofs);
+
+		printf("Pivot Vector: (%f,%f,%f)\n", model.bones[i].pivot[0],
+				model.bones[i].pivot[1], model.bones[i].pivot[2]);
+		printf("\n");
 	}
 }
 

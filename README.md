@@ -31,4 +31,6 @@ Original idea and structures by Stan84.
 Thanks to Stan84, PhilipTNG, Schlumpf and all the people who contributed to M2&M2/WotLK pages on the WoWDev wiki.
 Thanks to OneSadCookie for its https://github.com/OneSadCookie/fcaseopen
 
-If you want to contribute and have pure C (I don't want a line of C++ in this program !) knowledge, feel free to send me a message. ;)
+##You can help me :
+* If you have pure C (I don't want a line of C++ in this program !) knowledge and have some ideas to improve the code;
+* If you're able to make sweet reskins to make creatures match their vanilla counterpart. Example : a spotted Siberian Tiger texture ?

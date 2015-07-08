@@ -9,6 +9,7 @@
 #include "reading.h"
 #include "common.h"
 #include "colors.h"
+#include "printer.h"
 
 char* animfile_name(char *name, short AnimID, short SubAnimID) {
 	char *s = malloc(name_length + 4 + 1 + 2 + strlen(".anim") + 1); //%s%04d-%02d.anim
@@ -495,112 +496,34 @@ int read_transparency(FILE *lk_m2_file, LKM2 *ptr, FILE **anim_files) {
 }
 
 /**
- * Read texture animations. WIP
+ * Read texture animations.
  * @param lk_m2_file The file to read data.
  * @param ptr Pointer to a M2/WotLK structure.
  * @return 0 if successful
- * @author Stan84
  */
-int read_texanims(FILE *lk_m2_file, LKM2 *ptr) {
+int read_texanims(FILE *lk_m2_file, LKM2 *ptr, FILE **anim_files) {
 	if (ptr->header.nTexAnims > 0) {
-		ptr->tex_anims = malloc(
-				ptr->header.nTexAnims * sizeof(LKTextureAnimation));
+		ptr->texanims = malloc(ptr->header.nTexAnims * sizeof(LKTextureAnimation));
 		fseek(lk_m2_file, ptr->header.ofsTexAnims, SEEK_SET);
-		fread(&ptr->tex_anims, sizeof(LKTextureAnimation),
-				ptr->header.nTexAnims, lk_m2_file);
+		fread(ptr->texanims, sizeof(LKTextureAnimation), ptr->header.nTexAnims,
+				lk_m2_file);
 
-		//read addresses to real animation data
+		ptr->texanimofs = malloc(ptr->header.nTexAnims * sizeof(RefBlock));
+		ptr->texdata = malloc(ptr->header.nTexAnims * sizeof(LKBonesDataBlock));
 		int i;
 		for (i = 0; i < ptr->header.nTexAnims; i++) {
 			//Translation
-			ptr->temp_anim_ofs = malloc(
-					ptr->header.nTexAnims * sizeof(RefBlockSimple));
-			if (ptr->tex_anims[i].Translation.Times.n > 0) {
-				fseek(lk_m2_file, ptr->tex_anims[i].Translation.Times.ofs,
-				SEEK_SET);
-				fread(&ptr->temp_anim_ofs[i].t_times.n, sizeof(int), 1,
-						lk_m2_file);
-
-				fseek(lk_m2_file, ptr->tex_anims[i].Translation.Times.ofs + 0x4,
-				SEEK_SET);
-				fread(&ptr->temp_anim_ofs[i].t_times.ofs, sizeof(int), 1,
-						lk_m2_file);
-			} else {
-				ptr->temp_anim_ofs[i].t_times.n = 0;
-				ptr->temp_anim_ofs[i].t_times.ofs = 0;
-			}
-			if (ptr->tex_anims[i].Translation.Keys.n > 0) {
-				fseek(lk_m2_file, ptr->tex_anims[i].Translation.Keys.ofs,
-				SEEK_SET);
-				fread(&ptr->temp_anim_ofs[i].t_keys.n, sizeof(int), 1,
-						lk_m2_file);
-
-				fseek(lk_m2_file, ptr->tex_anims[i].Translation.Keys.ofs + 0x4,
-				SEEK_SET);
-				fread(&ptr->temp_anim_ofs[i].t_keys.ofs, sizeof(int), 1,
-						lk_m2_file);
-			} else {
-				ptr->temp_anim_ofs[i].t_keys.n = 0;
-				ptr->temp_anim_ofs[i].t_keys.ofs = 0;
-			}
+			read_Vec3DAnimBlock(lk_m2_file, &ptr->texanims[i].trans,
+					&ptr->texanimofs[i].trans, &ptr->texdata[i].trans,
+					ptr->animations, anim_files);
 			//Rotation
-			if (ptr->tex_anims[i].Rotation.Times.n > 0) {
-				fseek(lk_m2_file, ptr->tex_anims[i].Rotation.Times.ofs,
-				SEEK_SET);
-				fread(&ptr->temp_anim_ofs[i].r_times.n, sizeof(int), 1,
-						lk_m2_file);
-
-				fseek(lk_m2_file, ptr->tex_anims[i].Rotation.Times.ofs + 0x4,
-				SEEK_SET);
-				fread(&ptr->temp_anim_ofs[i].r_times.ofs, sizeof(int), 1,
-						lk_m2_file);
-			} else {
-				ptr->temp_anim_ofs[i].r_times.n = 0;
-				ptr->temp_anim_ofs[i].r_times.ofs = 0;
-			}
-			if (ptr->tex_anims[i].Rotation.Keys.n > 0) {
-				fseek(lk_m2_file, ptr->tex_anims[i].Rotation.Keys.ofs,
-				SEEK_SET);
-				fread(&ptr->temp_anim_ofs[i].r_keys.n, sizeof(int), 1,
-						lk_m2_file);
-
-				fseek(lk_m2_file, ptr->tex_anims[i].Rotation.Keys.ofs + 0x4,
-				SEEK_SET);
-				fread(&ptr->temp_anim_ofs[i].r_keys.ofs, sizeof(int), 1,
-						lk_m2_file);
-			} else {
-				ptr->temp_anim_ofs[i].r_keys.n = 0;
-				ptr->temp_anim_ofs[i].r_keys.ofs = 0;
-			}
+			read_QuatAnimBlock(lk_m2_file, &ptr->texanims[i].rot,
+					&ptr->texanimofs[i].rot, &ptr->texdata[i].rot,
+					ptr->animations, anim_files);
 			//Scaling
-			if (ptr->tex_anims[i].Scaling.Times.n > 0) {
-				fseek(lk_m2_file, ptr->tex_anims[i].Scaling.Times.ofs,
-				SEEK_SET);
-				fread(&ptr->temp_anim_ofs[i].s_times.n, sizeof(int), 1,
-						lk_m2_file);
-
-				fseek(lk_m2_file, ptr->tex_anims[i].Scaling.Times.ofs + 0x4,
-				SEEK_SET);
-				fread(&ptr->temp_anim_ofs[i].s_times.ofs, sizeof(int), 1,
-						lk_m2_file);
-			} else {
-				ptr->temp_anim_ofs[i].s_times.n = 0;
-				ptr->temp_anim_ofs[i].s_times.ofs = 0;
-			}
-			if (ptr->tex_anims[i].Scaling.Keys.n > 0) {
-				fseek(lk_m2_file, ptr->tex_anims[i].Scaling.Keys.ofs,
-				SEEK_SET);
-				fread(&ptr->temp_anim_ofs[i].s_keys.n, sizeof(int), 1,
-						lk_m2_file);
-
-				fseek(lk_m2_file, ptr->tex_anims[i].Scaling.Keys.ofs + 0x4,
-				SEEK_SET);
-				fread(&ptr->temp_anim_ofs[i].s_keys.ofs, sizeof(int), 1,
-						lk_m2_file);
-			} else {
-				ptr->temp_anim_ofs[i].s_keys.n = 0;
-				ptr->temp_anim_ofs[i].s_keys.ofs = 0;
-			}
+			read_Vec3DAnimBlock(lk_m2_file, &ptr->texanims[i].scal,
+					&ptr->animofs[i].scal, &ptr->texdata[i].scal,
+					ptr->animations, anim_files);
 		}
 		return 0;
 	}
@@ -776,6 +699,7 @@ int read_model(FILE *lk_m2_file, LKM2 *ptr) {
 	fread(ptr->animations, sizeof(LKModelAnimation), ptr->header.nAnimations,
 			lk_m2_file);
 
+
 	//Animation Files
 	FILE **anim_files;
 	anim_files = malloc(ptr->header.nAnimations * sizeof(FILE *));
@@ -792,10 +716,11 @@ int read_model(FILE *lk_m2_file, LKM2 *ptr) {
 							ptr->animations[i].subAnimID), "r+b");
 			if (anim_files[i] == NULL) {
 				fprintf(stderr, KRED "[Error] " RESET
-				"[Anim #%d, ID%d, Flags %d] %s file opening error \n", i,
+				"[Anim #%d, ID%d, Flags %d] %s file not found.\n", i,
 						ptr->animations[i].animID, ptr->animations[i].flags,
 						animfile_name(model_name, ptr->animations[i].animID,
 								ptr->animations[i].subAnimID));
+				fprintf(stderr, "[aliasNext %d]\n", ptr->animations[i].Index);
 				exit(EXIT_FAILURE);
 			}
 		}
@@ -937,9 +862,8 @@ int read_model(FILE *lk_m2_file, LKM2 *ptr) {
 			lk_m2_file);
 
 	//TexAnims
-	//read_texanims(lk_m2_file, ptr);
+	read_texanims(lk_m2_file, ptr, anim_files);
 	/*TODO
-	 TexAnims;
 	 Lights;
 	 Ribbons;
 	 Particles

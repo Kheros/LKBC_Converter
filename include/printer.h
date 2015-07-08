@@ -19,6 +19,8 @@ void print_animlookup(BCM2 model);
 void print_playanimlookup(BCM2 model);
 void print_texnames_bc(BCM2 model);
 void print_texnames_lk(LKM2 model);
+void print_boneheaders_lk(LKM2 model);
+void print_boneheaders_bc(BCM2 model);
 void printBits(size_t const size, void const * const ptr);
 
 #endif

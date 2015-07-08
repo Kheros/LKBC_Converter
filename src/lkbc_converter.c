@@ -49,46 +49,73 @@ char* final_name(char *name) {
 	strcat(s, "_BC.m2");
 	return s;
 }
+
+void show_help() {
+	fprintf(stderr,
+			"Usage : lkbc_converter [OPTIONS] <model name> <target name>\n");
+	fprintf(stderr, " -t\tShow the textures your model need to work.\n");
+	fprintf(stderr, " -a\tShow animations data.\n");
+	fprintf(stderr, " -b\tShow bones data.\n");
+}
 /**
  * Main function
  */
 int main(int argc, char *argv[]) {
 	printf("============================\n");
 	printf("= LKBC_Converter by Koward =\n");
-	printf("==v0.3-alpha================\n");
+	printf("==v0.4-alpha================\n");
 	printf("\tNote : models with .anim files are still work in progress.\n");
 	printf("\n");
 	char *m2_name = 0;
+	char *target_name = 0;
+	short show_anims = 0;
+	short show_bones = 0;
+	short show_textures = 0;
 	int i;
 	for (i = 1; i < argc; i++) {
 		if (argv[i][0] == '-') {
 			switch (argv[i][1]) {
+			case 't':
+				show_textures = 1;
+				break;
+			case 'a':
+				show_anims = 1;
+				break;
+			case 'b':
+				show_bones = 1;
+				break;
 			default:
 				fprintf(stderr, KYEL "[Warning] " RESET "Unknown option: %s\n",
 						argv[i]);
 			}
-		} else { //M2 file
-			m2_name = argv[i];
+		} else { //M2 name or target name
+			if (m2_name == 0) {
+				m2_name = argv[i];
+			} else {
+				target_name = argv[i];
+			}
 		}
 	}
 
 	if (m2_name == NULL) {
 		fprintf(stderr, KRED "[Error] " RESET "No M2 file specified.\n");
+		show_help();
 		exit(EXIT_FAILURE);
 	}
-	//Storing M2 name (without .m2 extension)
+	//Storing M2 name without .m2 extension
 	size_t m2_name_length = strlen(m2_name);
 	model_name = malloc(m2_name_length - 3 + 1);
 	name_length = m2_name_length - 3;
-	strncpy(model_name, argv[1], m2_name_length - 3);
+	strncpy(model_name, m2_name, m2_name_length - 3);
 	model_name[m2_name_length - 3] = 0;
 
 	//Reading files
 	printf(KCYN "[Opening M2/WotLK file]\n" RESET);
 	printf("\t%s\n", m2_name);
-	FILE *lk_m2_file = fcaseopen(argv[1], "r+b");
+	FILE *lk_m2_file = fcaseopen(m2_name, "r+b");
 	if (lk_m2_file == NULL) {
-		fprintf(stderr, KRED "[Error] " RESET "M2 file not found\n");
+		fprintf(stderr, KRED "[Error] " RESET "M2 file not found.\n");
+		show_help();
 		exit(EXIT_FAILURE);
 	}
 
@@ -97,15 +124,13 @@ int main(int argc, char *argv[]) {
 
 	FILE **skin_files;
 	skin_files = malloc(lk_model.header.nViews * sizeof(FILE *));
-	//int i;
 	printf("[Opening Skin files]\n");
 	for (i = 0; i < lk_model.header.nViews; i++) {
-		printf("\t%s\n", skin_name(argv[1], i));
-		skin_files[i] = fcaseopen(skin_name(argv[1], i), "r+b");
+		printf("\t%s\n", skin_name(m2_name, i));
+		skin_files[i] = fcaseopen(skin_name(m2_name, i), "r+b");
 		if (skin_files[i] == NULL) {
 			fprintf(stderr,
-					KRED "[Error] " RESET "SKIN/LK number %d not found\n",
-					i);
+			KRED "[Error] " RESET "SKIN/LK number %d not found.\n", i);
 			exit(EXIT_FAILURE);
 		}
 	}
@@ -120,6 +145,17 @@ int main(int argc, char *argv[]) {
 	lk_to_bc(lk_model, skins, &bc_model);
 	printf("Conversion complete.\n\n");
 
+	//Printing
+	if (show_anims > 0) {
+		print_anims_bc(bc_model);
+	}
+	if (show_bones > 0) {
+		print_bones(bc_model, 7);
+	}
+	if (show_textures > 0) {
+		print_texnames_bc(bc_model);
+	}
+
 	//Reads the genuine TBC file. Useful to compare the models.
 	/*
 	 FILE *genuine_m2_file = fcaseopen("MountedKnightGenuine.m2", "r+b");
@@ -132,13 +168,19 @@ int main(int argc, char *argv[]) {
 	 */
 
 	//Writing
-	char *new_name = final_name(model_name);
+	char *new_name;
+	if (target_name != 0) {
+		new_name = target_name;
+	} else {
+		new_name = final_name(model_name);
+	}
 	printf(KGRN "[Creating M2/BC file]\n" RESET);
 	printf("\t%s\n", new_name);
 	printf("==> ");
 	FILE *bc_m2_file = fcaseopen(new_name, "w+b");
 	if (bc_m2_file == NULL) {
-		fprintf(stderr, KRED "[Error] " RESET "Can't write M2 file. Check system permissions.\n");
+		fprintf(stderr,
+				KRED "[Error] " RESET "Can't write M2 file. Check system permissions or target name if specified.\n");
 		exit(EXIT_FAILURE);
 	}
 	write_model(bc_m2_file, &bc_model);

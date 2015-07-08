@@ -224,7 +224,7 @@ typedef struct LKModelAnimation {
 	Vec3D boxB;				//MaximumExtent
 	float rad;				//BoundsRadius
 	int16 NextAnimation;
-	uint16 Index;
+	uint16 Index;//aliasNext
 } LKModelAnimation;
 
 typedef struct ModelAnimation {
@@ -333,10 +333,10 @@ typedef struct ModelVertex {
 
 //Bones
 typedef struct LKModelBoneDef {
-	int32 animid;
+	int32 animid;//KeyBoneID
 	uint32 flags;
 	int16 parent;
-	uint16 geoid;
+	uint16 geoid;//SubmeshID
 	int32 unk;
 
 	//Offsets link to a new nX ofsX
@@ -348,9 +348,9 @@ typedef struct LKModelBoneDef {
 } LKModelBoneDef;
 typedef struct ModelBoneDef {
 	int32 animid;
-	int32 flags;
+	uint32 flags;
 	int16 parent;
-	int16 geoid;
+	uint16 geoid;
 	int32 unk;
 
 	AnimationBlock trans;
@@ -570,15 +570,15 @@ typedef struct ModelTextureDef {
 } ModelTextureDef;
 
 typedef struct LKTextureAnimation {
-	LKAnimationBlock Translation;
-	LKAnimationBlock Rotation;
-	LKAnimationBlock Scaling;
+	LKAnimationBlock trans;
+	LKAnimationBlock rot;
+	LKAnimationBlock scal;
 } LKTextureAnimation;
 
 typedef struct TextureAnimation {
-	AnimationBlock Translation;
-	AnimationBlock Rotation;
-	AnimationBlock Scaling;
+	AnimationBlock trans;
+	AnimationBlock rot;
+	AnimationBlock scal;
 } TextureAnimation;
 
 typedef struct View { //Only present in 2.x models. Replaced by Skin files in 3.x
@@ -660,8 +660,10 @@ typedef struct LKM2 {
 	TransparencyRefBlock *transparencyanimofs;
 	LKTransparencyDataBlock *transparencydata;
 
-	LKTextureAnimation *tex_anims;
-	RefBlockSimple *temp_anim_ofs;
+	LKTextureAnimation *texanims;
+	RefBlock *texanimofs;
+	LKBonesDataBlock *texdata; //bones layer 2
+
 
 	short *TexReplace;
 	int *renderflags;
@@ -687,8 +689,8 @@ typedef struct LKM2 {
 	CamerasRefBlock *camerasanimofs;
 	LKCamerasDataBlock *camerasdata;
 	uint16 *CameraLookup;
-/*TODO Events, Lights, Cameras,
- * CameraLookup, RibbonEmitters, ParticleEmmiters.
+/*TODO  Lights,
+ * RibbonEmitters, ParticleEmmiters.
  */
 } LKM2;
 
@@ -731,7 +733,9 @@ typedef struct BCM2 {
 	Transparency *transparencyrefs;
 	TransparencyDataBlock *transparencydata;
 
-	TextureAnimation *tex_anims;
+	TextureAnimation *texanims;
+	BonesDataBlock *texdata;
+
 	short *TexReplace;
 	int *renderflags;
 	int16 *BoneLookupTable;
@@ -753,8 +757,8 @@ typedef struct BCM2 {
 	Camera *cameras;
 	CamerasDataBlock *camerasdata;
 	uint16 *CameraLookup;
-/*TODO Lights, Cameras,
- * CameraLookup, RibbonEmitters, ParticleEmmiters.
+/*TODO Lights,
+ * RibbonEmitters, ParticleEmmiters.
  */
 } BCM2;
 

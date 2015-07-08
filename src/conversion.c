@@ -212,6 +212,12 @@ void convert_Vec3DAnimBlock(LKAnimationBlock LKBlock, AnimRefs AnimRefs,
 		Vec3D_LKSubBlock *LKDataBlock, AnimationBlock *ptrBlock,
 		Vec3D_SubBlock *ptrDataBlock, ModelAnimation *animations,
 		int nAnimations) {
+	ptrBlock->Ranges.ofs = 0;
+	ptrBlock->Times.ofs = 0;
+	ptrBlock->Keys.ofs = 0;
+	ptrBlock->Ranges.n = 0;
+	ptrBlock->Times.n = 0;
+	ptrBlock->Keys.n = 0;
 	if (LKBlock.Times.n > 1) {
 		//Interpolation ranges
 		ptrBlock->Ranges.n = nAnimations + 1;
@@ -284,10 +290,6 @@ void convert_Vec3DAnimBlock(LKAnimationBlock LKBlock, AnimRefs AnimRefs,
 		for (m = 0; m < 3; m++) {
 			ptrDataBlock->keys[0][m] = LKDataBlock[0].keys[0][m];
 		}
-	} else {
-		ptrBlock->Ranges.n = 0;
-		ptrBlock->Times.n = 0;
-		ptrBlock->Keys.n = 0;
 	}
 }
 
@@ -295,6 +297,12 @@ void convert_BigFloatAnimBlock(LKAnimationBlock LKBlock, AnimRefs AnimRefs,
 		BigFloat_LKSubBlock *LKDataBlock, AnimationBlock *ptrBlock,
 		BigFloat_SubBlock *ptrDataBlock, ModelAnimation *animations,
 		int nAnimations) {
+	ptrBlock->Ranges.ofs = 0;
+	ptrBlock->Times.ofs = 0;
+	ptrBlock->Keys.ofs = 0;
+	ptrBlock->Ranges.n = 0;
+	ptrBlock->Times.n = 0;
+	ptrBlock->Keys.n = 0;
 	if (LKBlock.Times.n > 1) {
 		//Interpolation ranges
 		ptrBlock->Ranges.n = nAnimations + 1;
@@ -379,10 +387,6 @@ void convert_BigFloatAnimBlock(LKAnimationBlock LKBlock, AnimRefs AnimRefs,
 				ptrDataBlock->keys[0][m][n] = LKDataBlock[0].keys[0][m][n];
 			}
 		}
-	} else {
-		ptrBlock->Ranges.n = 0;
-		ptrBlock->Times.n = 0;
-		ptrBlock->Keys.n = 0;
 	}
 }
 
@@ -400,6 +404,12 @@ void convert_QuatAnimBlock(LKAnimationBlock LKBlock, AnimRefs AnimRefs,
 		Quat_LKSubBlock *LKDataBlock, AnimationBlock *ptrBlock,
 		Quat_SubBlock *ptrDataBlock, ModelAnimation *animations,
 		int nAnimations) {
+	ptrBlock->Ranges.ofs = 0;
+	ptrBlock->Times.ofs = 0;
+	ptrBlock->Keys.ofs = 0;
+	ptrBlock->Ranges.n = 0;
+	ptrBlock->Times.n = 0;
+	ptrBlock->Keys.n = 0;
 	if (LKBlock.Times.n > 1) {
 		//Interpolation ranges
 		ptrBlock->Ranges.n = nAnimations + 1;
@@ -474,16 +484,18 @@ void convert_QuatAnimBlock(LKAnimationBlock LKBlock, AnimRefs AnimRefs,
 		for (m = 0; m < 4; m++) {
 			ptrDataBlock->keys[0][m] = LKDataBlock[0].keys[0][m];
 		}
-	} else {
-		ptrBlock->Ranges.n = 0;
-		ptrBlock->Times.n = 0;
-		ptrBlock->Keys.n = 0;
 	}
 }
 
 void convert_IntAnimBlock(LKAnimationBlock LKBlock, AnimRefs AnimRefs,
 		Int_LKSubBlock *LKDataBlock, AnimationBlock *ptrBlock,
 		Int_SubBlock *ptrDataBlock, ModelAnimation *animations, int nAnimations) {
+	ptrBlock->Ranges.ofs = 0;
+	ptrBlock->Times.ofs = 0;
+	ptrBlock->Keys.ofs = 0;
+	ptrBlock->Ranges.n = 0;
+	ptrBlock->Times.n = 0;
+	ptrBlock->Keys.n = 0;
 	if (LKBlock.Times.n > 1) {
 		//Interpolation ranges
 		ptrBlock->Ranges.n = nAnimations + 1;
@@ -543,16 +555,18 @@ void convert_IntAnimBlock(LKAnimationBlock LKBlock, AnimRefs AnimRefs,
 		ptrDataBlock->keys = malloc(sizeof(int));
 		ptrDataBlock->times[0] = LKDataBlock[0].times[0];
 		ptrDataBlock->keys[0] = LKDataBlock[0].keys[0];
-	} else {
-		ptrBlock->Ranges.n = 0;
-		ptrBlock->Times.n = 0;
-		ptrBlock->Keys.n = 0;
 	}
 }
 void convert_ShortAnimBlock(LKAnimationBlock LKBlock, AnimRefs AnimRefs,
 		Short_LKSubBlock *LKDataBlock, AnimationBlock *ptrBlock,
 		Short_SubBlock *ptrDataBlock, ModelAnimation *animations,
 		int nAnimations) {
+	ptrBlock->Ranges.ofs = 0;
+	ptrBlock->Times.ofs = 0;
+	ptrBlock->Keys.ofs = 0;
+	ptrBlock->Ranges.n = 0;
+	ptrBlock->Times.n = 0;
+	ptrBlock->Keys.n = 0;
 	if (LKBlock.Times.n > 1) {
 		//Interpolation ranges
 		ptrBlock->Ranges.n = nAnimations + 1;
@@ -612,10 +626,6 @@ void convert_ShortAnimBlock(LKAnimationBlock LKBlock, AnimRefs AnimRefs,
 		ptrDataBlock->keys = malloc(sizeof(short));
 		ptrDataBlock->times[0] = LKDataBlock[0].times[0];
 		ptrDataBlock->keys[0] = LKDataBlock[0].keys[0];
-	} else {
-		ptrBlock->Ranges.n = 0;
-		ptrBlock->Times.n = 0;
-		ptrBlock->Keys.n = 0;
 	}
 }
 
@@ -623,6 +633,10 @@ void convert_EventAnimBlock(LKEventAnimBlock LKBlock, ArrayRef *ArrayRefs,
 		LKEventsDataBlock LKDataBlock, EventAnimBlock *ptrBlock,
 		EventsDataBlock *ptrDataBlock, ModelAnimation *animations,
 		int nAnimations) {
+	ptrBlock->Ranges.ofs = 0;
+	ptrBlock->Times.ofs = 0;
+	ptrBlock->Ranges.n = 0;
+	ptrBlock->Times.n = 0;
 	if (LKBlock.Times.n > 1) {
 		//Interpolation ranges
 		ptrBlock->Ranges.n = nAnimations + 1;
@@ -657,9 +671,6 @@ void convert_EventAnimBlock(LKEventAnimBlock LKBlock, ArrayRef *ArrayRefs,
 		ptrBlock->Times.n = 1;
 		ptrDataBlock->times = malloc(sizeof(uint32));
 		ptrDataBlock->times[0] = LKDataBlock.times[0][0];
-	} else {
-		ptrBlock->Ranges.n = 0;
-		ptrBlock->Times.n = 0;
 	}
 }
 /**
@@ -714,6 +725,41 @@ int bones_converter(BCM2 *ptr, LKM2 lk_m2) {
 		for (j = 0; j < 3; j++) {
 			ptr->bones[i].pivot[j] = lk_m2.bones[i].pivot[j];
 		}
+	}
+	return 0;
+}
+
+int texanims_converter(BCM2 *ptr, LKM2 lk_m2) {
+	ptr->texanims = malloc(ptr->header.nTexAnims * sizeof(TextureAnimation));
+	ptr->texdata = malloc(ptr->header.nTexAnims * sizeof(BonesDataBlock));
+	int i;
+	for (i = 0; i < ptr->header.nTexAnims; i++) {
+		//INIT
+		ModelAnimation *animations = ptr->animations;
+		int nAnimations = ptr->header.nAnimations;
+
+		//translation
+		convert_Vec3DAnimBlock(lk_m2.texanims[i].trans, lk_m2.texanimofs[i].trans,
+				lk_m2.texdata[i].trans, &ptr->texanims[i].trans,
+				&ptr->texdata[i].trans, animations, nAnimations);
+		//rotation
+		convert_QuatAnimBlock(lk_m2.texanims[i].rot, lk_m2.texanimofs[i].rot,
+				lk_m2.texdata[i].rot, &ptr->texanims[i].rot,
+				&ptr->texdata[i].rot, animations, nAnimations);
+		//scaling
+		convert_Vec3DAnimBlock(lk_m2.texanims[i].scal, lk_m2.texanimofs[i].scal,
+				lk_m2.texdata[i].scal, &ptr->texanims[i].scal,
+				&ptr->texdata[i].scal, animations, nAnimations);
+
+		//translation
+		ptr->texanims[i].trans.type = lk_m2.texanims[i].trans.type;
+		ptr->texanims[i].trans.seq = lk_m2.texanims[i].trans.seq;
+		//rotation
+		ptr->texanims[i].rot.type = lk_m2.texanims[i].rot.type;
+		ptr->texanims[i].rot.seq = lk_m2.texanims[i].rot.seq;
+		//scaling
+		ptr->texanims[i].scal.type = lk_m2.texanims[i].scal.type;
+		ptr->texanims[i].scal.seq = lk_m2.texanims[i].scal.seq;
 	}
 	return 0;
 }
@@ -1220,8 +1266,9 @@ int lk_to_bc(LKM2 lk_m2, Skin *skins, BCM2 *ptr) {
 	cameras_converter(ptr, lk_m2);
 	ptr->CameraLookup = lk_m2.CameraLookup;
 
+	//TexAnims
+	texanims_converter(ptr, lk_m2);
 	/*TODO
-	 TexAnims;
 	 Lights;
 	 Ribbons;
 	 Particles
