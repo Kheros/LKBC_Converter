@@ -7,3 +7,4 @@
 
 char *model_name;
 size_t name_length;
+int classic;

@@ -14,6 +14,7 @@ typedef unsigned int uint32;
 typedef int int32;
 typedef int Range[2];
 typedef short Quat[4];
+typedef float QuatF[4];
 typedef float Vec3D[3];
 typedef float Vec2D[2];
 typedef uint16 Triangle[3]; //Indices for Triangles
@@ -29,24 +30,6 @@ typedef struct ArrayRef { //Can point to absolutely anything
 	uint32 n;
 	uint32 ofs;
 } ArrayRef;
-
-/*Arrays with an unknown size*/
-
-typedef struct RangeArray {
-	Range *values;
-} RangeArray;
-typedef struct Uint32Array {
-	uint32 *values;
-} Uint32Array;
-typedef struct Vec3DArray {
-	Vec3D *values;
-} Vec3DArray;
-typedef struct QuatArray {
-	Quat *values;
-} QuatArray;
-typedef struct ShortArray {
-	short *values;
-} ShortArray;
 
 typedef struct LKModelHeader {
 	uint32 id;								//0x000
@@ -317,6 +300,16 @@ typedef struct BigFloat_SubBlock{
 	BigFloat *keys;
 }BigFloat_SubBlock;
 
+typedef struct Float_LKSubBlock{
+	uint32 *times;
+	float *keys;
+}Float_LKSubBlock;
+typedef struct Float_SubBlock{
+	Range *ranges;
+	uint32 *times;
+	float *keys;
+}Float_SubBlock;
+
 typedef struct AnimRefs{
 	ArrayRef *times;
 	ArrayRef *keys;
@@ -359,6 +352,18 @@ typedef struct ModelBoneDef {
 
 	Vec3D pivot;
 } ModelBoneDef;
+typedef struct CLModelBoneDef {
+	int32 animid;
+	uint32 flags;
+	int16 parent;
+	uint16 geoid;
+
+	AnimationBlock trans;
+	AnimationBlock rot;
+	AnimationBlock scal;
+
+	Vec3D pivot;
+} CLModelBoneDef;
 typedef struct RefBlock {
 	AnimRefs trans;
 	AnimRefs rot;
@@ -476,16 +481,59 @@ typedef struct TransparencyDataBlock {
 	Short_SubBlock alpha;
 } TransparencyDataBlock;
 
+//Lights
+typedef struct LKLight {
+	uint16 ID;
+	uint16 bone;
+	Vec3D position;
+	LKAnimationBlock a_color;//Ambient
+	LKAnimationBlock a_intensity;
+	LKAnimationBlock d_color;//Diffuse
+	LKAnimationBlock d_intensity;
+	LKAnimationBlock a_start;//Attenuation
+	LKAnimationBlock a_end;
+	LKAnimationBlock unknown;
+} LKLight;
+typedef struct Light {
+	uint16 ID;
+	uint16 bone;
+	Vec3D position;
+	AnimationBlock a_color;//Ambient
+	AnimationBlock a_intensity;
+	AnimationBlock d_color;//Diffuse
+	AnimationBlock d_intensity;
+	AnimationBlock a_start;//Attenuation
+	AnimationBlock a_end;
+	AnimationBlock unknown;
+} Light;
+typedef struct LightsRefBlock{
+	AnimRefs a_color;//Ambient
+	AnimRefs a_intensity;
+	AnimRefs d_color;//Diffuse
+	AnimRefs d_intensity;
+	AnimRefs a_start;//Attenuation
+	AnimRefs a_end;
+	AnimRefs unknown;
+}LightsRefBlock;
+typedef struct LKLightsDataBlock {
+	Vec3D_LKSubBlock *a_color;//Ambient
+	Float_LKSubBlock *a_intensity;
+	Vec3D_LKSubBlock *d_color;//Diffuse
+	Float_LKSubBlock *d_intensity;
+	Float_LKSubBlock *a_start;//Attenuation
+	Float_LKSubBlock *a_end;
+	Int_LKSubBlock *unknown;
+} LKLightsDataBlock;
+typedef struct LightsDataBlock {
+	Vec3D_SubBlock a_color;//Ambient
+	Float_SubBlock a_intensity;
+	Vec3D_SubBlock d_color;//Diffuse
+	Float_SubBlock d_intensity;
+	Float_SubBlock a_start;//Attenuation
+	Float_SubBlock a_end;
+	Int_SubBlock unknown;
+} LightsDataBlock;
 
-//TODO TexAnims
-typedef struct RefBlockSimple { //Temporary, for TexAnims. Remnant of Stan84's code.
-	ArrayRef t_times;
-	ArrayRef t_keys;
-	ArrayRef r_times;
-	ArrayRef r_keys;
-	ArrayRef s_times;
-	ArrayRef s_keys;
-} RefBlockSimple;
 
 typedef struct SkinHeader {
 	uint32 ID;
@@ -546,6 +594,20 @@ typedef struct Submesh {
 	Vec3D Position;
 	float Floats[4];
 } Submesh;
+
+typedef struct CLSubmesh {
+	uint16 ID;
+	uint16 Level; //EXPERIMENTAL : No mention of this in the Wiki, but the LK level might have always been there.
+	uint16 StartVertex;
+	uint16 nVertices;
+	uint16 StartTriangle;
+	uint16 nTriangles;
+	uint16 nBones;
+	uint16 StartBones;
+	uint16 boneInfluences; //Amount of bones up the parent-chain affecting the submesh
+	uint16 RootBone;
+	Vec3D Position;
+} CLSubmesh;
 
 typedef struct TexUnit {
 	uint16 Flags;
@@ -676,6 +738,10 @@ typedef struct LKM2 {
 	Vec3D *BoundingVertices;
 	Vec3D *BoundingNormals;
 
+	LKLight *lights;
+	LightsRefBlock *lightsanimofs;
+	LKLightsDataBlock *lightsdata;
+
 	LKAttachment *attachments;
 	AttachmentsRefBlock *attachmentsanimofs;
 	LKAttachmentsDataBlock *attachmentsdata;
@@ -746,6 +812,9 @@ typedef struct BCM2 {
 	Triangle *BoundingTriangles;
 	Vec3D *BoundingVertices;
 	Vec3D *BoundingNormals;
+
+	Light *lights;
+	LightsDataBlock *lightsdata;
 
 	Attachment *attachments;
 	AttachmentsDataBlock *attachmentsdata;

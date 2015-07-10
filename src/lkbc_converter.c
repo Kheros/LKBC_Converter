@@ -46,7 +46,11 @@ char* final_name(char *name) {
 	size_t name_length = strlen(name);
 	char *s = malloc(name_length + strlen("_BC.m2") + 1 + 16);
 	strcpy(s, name);
-	strcat(s, "_BC.m2");
+	if (classic > 0) {
+		strcat(s, "_CL.m2");
+	} else {
+		strcat(s, "_BC.m2");
+	}
 	return s;
 }
 
@@ -56,6 +60,8 @@ void show_help() {
 	fprintf(stderr, " -t\tShow the textures your model need to work.\n");
 	fprintf(stderr, " -a\tShow animations data.\n");
 	fprintf(stderr, " -b\tShow bones data.\n");
+	fprintf(stderr,
+			" -c\tSet the converter target to Classic instead of The Burning Crusade.\n");
 }
 /**
  * Main function
@@ -64,13 +70,13 @@ int main(int argc, char *argv[]) {
 	printf("============================\n");
 	printf("= LKBC_Converter by Koward =\n");
 	printf("==v0.4-alpha================\n");
-	printf("\tNote : models with .anim files are still work in progress.\n");
 	printf("\n");
 	char *m2_name = 0;
 	char *target_name = 0;
 	short show_anims = 0;
 	short show_bones = 0;
 	short show_textures = 0;
+	classic = 0;
 	int i;
 	for (i = 1; i < argc; i++) {
 		if (argv[i][0] == '-') {
@@ -83,6 +89,9 @@ int main(int argc, char *argv[]) {
 				break;
 			case 'b':
 				show_bones = 1;
+				break;
+			case 'c':
+				classic = 1;
 				break;
 			default:
 				fprintf(stderr, KYEL "[Warning] " RESET "Unknown option: %s\n",
@@ -174,7 +183,11 @@ int main(int argc, char *argv[]) {
 	} else {
 		new_name = final_name(model_name);
 	}
-	printf(KGRN "[Creating M2/BC file]\n" RESET);
+	if (classic > 0) {
+		printf(KBLU "[Creating M2/CL file]\n" RESET);
+	} else {
+		printf(KGRN "[Creating M2/BC file]\n" RESET);
+	}
 	printf("\t%s\n", new_name);
 	printf("==> ");
 	FILE *bc_m2_file = fcaseopen(new_name, "w+b");

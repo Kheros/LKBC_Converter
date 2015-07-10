@@ -4,6 +4,6 @@
 
 extern char *model_name;
 extern size_t name_length;
-int isBugged(int flags);
+extern int classic;
 
 #endif

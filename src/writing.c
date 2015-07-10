@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "writing.h"
+#include "common.h"
 
 /**
  * Find the address of the file's end.
@@ -31,6 +32,17 @@ int align(FILE *file) {
 	memset(zeros, 0, count * sizeof(char));
 	fwrite(zeros, sizeof(char), count, file);
 	return count;
+}
+
+/**
+ * In WoW 2.0+ Blizzard are now storing rotation data in 16bit values instead of 32bit.
+ * The conversion BC => Classic is done with this function.
+ * @param Short The short to convert.
+ * @return a converted float value.
+ * @author schlumpf
+ */
+inline float stf(short Short) {
+	return (Short > 0 ? Short - 32767 : Short + 32767) / 32767.0;
 }
 
 /**
@@ -69,8 +81,40 @@ int write_views(FILE *bc_m2_file, BCM2 *ptr) {
 			}
 			if (ptr->views[i].header.nSubmeshes > 0) {
 				ptr->views[i].header.ofsSubmeshes = getPos(bc_m2_file);
-				fwrite(ptr->views[i].Submeshes, sizeof(Submesh),
-						ptr->views[i].header.nSubmeshes, bc_m2_file);
+				if (classic > 0) {
+					CLSubmesh CLSubmeshes[ptr->views[i].header.nSubmeshes];
+					int j;
+					for (j = 0; j < ptr->views[i].header.nSubmeshes; j++) {
+						CLSubmeshes[j].ID = ptr->views[i].Submeshes[j].ID;
+						CLSubmeshes[j].Level = ptr->views[i].Submeshes[j].Level;
+						CLSubmeshes[j].StartVertex =
+								ptr->views[i].Submeshes[j].StartVertex;
+						CLSubmeshes[j].nVertices =
+								ptr->views[i].Submeshes[j].nVertices;
+						CLSubmeshes[j].StartTriangle =
+								ptr->views[i].Submeshes[j].StartTriangle;
+						CLSubmeshes[j].nTriangles =
+								ptr->views[i].Submeshes[j].nTriangles;
+						CLSubmeshes[j].nBones =
+								ptr->views[i].Submeshes[j].nBones;
+						CLSubmeshes[j].StartBones =
+								ptr->views[i].Submeshes[j].StartBones;
+						CLSubmeshes[j].boneInfluences =
+								ptr->views[i].Submeshes[j].boneInfluences;
+						CLSubmeshes[j].RootBone =
+								ptr->views[i].Submeshes[j].RootBone;
+						int k;
+						for (k = 0; k < 3; k++) {
+							CLSubmeshes[j].Position[k] =
+									ptr->views[i].Submeshes[j].Position[k];
+						}
+					}
+					fwrite(CLSubmeshes, sizeof(CLSubmesh),
+							ptr->views[i].header.nSubmeshes, bc_m2_file);
+				} else {
+					fwrite(ptr->views[i].Submeshes, sizeof(Submesh),
+							ptr->views[i].header.nSubmeshes, bc_m2_file);
+				}
 				align(bc_m2_file);
 			}
 			if (ptr->views[i].header.nTextureUnits > 0) {
@@ -122,7 +166,8 @@ void write_BigFloatAnimBlock(FILE *bc_m2_file, AnimationBlock *ptrBlock,
 			&ptrDataBlock->times);
 	if (ptrBlock->Keys.n > 0) {
 		ptrBlock->Keys.ofs = getPos(bc_m2_file);
-		fwrite(ptrDataBlock->keys, sizeof(BigFloat), ptrBlock->Keys.n, bc_m2_file);
+		fwrite(ptrDataBlock->keys, sizeof(BigFloat), ptrBlock->Keys.n,
+				bc_m2_file);
 		align(bc_m2_file);
 	}
 }
@@ -132,7 +177,20 @@ void write_QuatAnimBlock(FILE *bc_m2_file, AnimationBlock *ptrBlock,
 			&ptrDataBlock->times);
 	if (ptrBlock->Keys.n > 0) {
 		ptrBlock->Keys.ofs = getPos(bc_m2_file);
-		fwrite(ptrDataBlock->keys, sizeof(Quat), ptrBlock->Keys.n, bc_m2_file);
+		if (classic > 0) {
+			QuatF classic_quats[ptrBlock->Keys.n];
+			int i;
+			for (i = 0; i < ptrBlock->Keys.n; i++) {
+				int j;
+				for (j = 0; j < 4; j++) {
+					classic_quats[i][j] = stf(ptrDataBlock->keys[i][j]);
+				}
+			}
+			fwrite(classic_quats, sizeof(QuatF), ptrBlock->Keys.n, bc_m2_file);
+		} else {
+			fwrite(ptrDataBlock->keys, sizeof(Quat), ptrBlock->Keys.n,
+					bc_m2_file);
+		}
 		align(bc_m2_file);
 	}
 }
@@ -158,6 +216,28 @@ void write_ShortAnimBlock(FILE *bc_m2_file, AnimationBlock *ptrBlock,
 }
 
 /**
+ * Cast a ModelBoneDef to a CLModelBoneDef (Classic) structure to adjust it when "-c" is used.
+ * @param classic_bones
+ * @param bones
+ * @param n
+ */
+void cast_bones(CLModelBoneDef *classic_bones, ModelBoneDef *bones, int n) {
+	int i;
+	for (i = 0; i < n; i++) {
+		classic_bones[i].animid = bones[i].animid;
+		classic_bones[i].flags = bones[i].flags;
+		classic_bones[i].parent = bones[i].parent;
+		classic_bones[i].geoid = bones[i].geoid;
+		classic_bones[i].trans = bones[i].trans;
+		classic_bones[i].rot = bones[i].rot;
+		classic_bones[i].scal = bones[i].scal;
+		int j;
+		for (j = 0; j < 3; j++) {
+			classic_bones[i].pivot[j] = bones[i].pivot[j];
+		}
+	}
+}
+/**
  * Write bones. Good example of writing a structure with Animations Blocks inside.
  * @param bc_m2_file The file to write data.
  * @param ptr A pointer to a M2/BC structure.
@@ -165,8 +245,17 @@ void write_ShortAnimBlock(FILE *bc_m2_file, AnimationBlock *ptrBlock,
 int write_bones(FILE *bc_m2_file, BCM2 *ptr) {
 	if (ptr->header.nBones > 0) {
 		ptr->header.ofsBones = getPos(bc_m2_file);
-		fwrite(ptr->bones, sizeof(ModelBoneDef), ptr->header.nBones,
-				bc_m2_file);
+
+		if (classic > 0) {
+			CLModelBoneDef classic_bones[ptr->header.nBones];
+			cast_bones(classic_bones, ptr->bones, ptr->header.nBones);
+			fwrite(classic_bones, sizeof(CLModelBoneDef), ptr->header.nBones,
+					bc_m2_file);
+		} else {
+			fwrite(ptr->bones, sizeof(ModelBoneDef), ptr->header.nBones,
+					bc_m2_file);
+		}
+
 		align(bc_m2_file);
 		int i;
 		for (i = 0; i < ptr->header.nBones; i++) {
@@ -182,10 +271,20 @@ int write_bones(FILE *bc_m2_file, BCM2 *ptr) {
 			write_Vec3DAnimBlock(bc_m2_file, &ptr->bones[i].scal,
 					&ptr->bonesdata[i].scal);
 		}
+		fseek(bc_m2_file, ptr->header.ofsBones, SEEK_SET);
+
+		if (classic > 0) {
+			CLModelBoneDef classic_bones[ptr->header.nBones];
+			cast_bones(classic_bones, ptr->bones, ptr->header.nBones);
+			fwrite(classic_bones, sizeof(CLModelBoneDef), ptr->header.nBones,
+					bc_m2_file);
+		} else {
+			fwrite(ptr->bones, sizeof(ModelBoneDef), ptr->header.nBones,
+					bc_m2_file);
+		}
+
+		fseek(bc_m2_file, 0, SEEK_END);
 	}
-	fseek(bc_m2_file, ptr->header.ofsBones, SEEK_SET);
-	fwrite(ptr->bones, sizeof(ModelBoneDef), ptr->header.nBones, bc_m2_file);
-	fseek(bc_m2_file, 0, SEEK_END);
 	return 0;
 }
 
@@ -209,18 +308,18 @@ int write_texanims(FILE *bc_m2_file, BCM2 *ptr) {
 			write_Vec3DAnimBlock(bc_m2_file, &ptr->texanims[i].scal,
 					&ptr->texdata[i].scal);
 		}
+		fseek(bc_m2_file, ptr->header.ofsTexAnims, SEEK_SET);
+		fwrite(ptr->texanims, sizeof(TextureAnimation), ptr->header.nTexAnims,
+				bc_m2_file);
+		fseek(bc_m2_file, 0, SEEK_END);
 	}
-	fseek(bc_m2_file, ptr->header.ofsTexAnims, SEEK_SET);
-	fwrite(ptr->texanims, sizeof(TextureAnimation), ptr->header.nTexAnims, bc_m2_file);
-	fseek(bc_m2_file, 0, SEEK_END);
 	return 0;
 }
 
 int write_cameras(FILE *bc_m2_file, BCM2 *ptr) {
 	if (ptr->header.nCameras > 0) {
 		ptr->header.ofsCameras = getPos(bc_m2_file);
-		fwrite(ptr->cameras, sizeof(Camera), ptr->header.nCameras,
-				bc_m2_file);
+		fwrite(ptr->cameras, sizeof(Camera), ptr->header.nCameras, bc_m2_file);
 		align(bc_m2_file);
 		int i;
 		for (i = 0; i < ptr->header.nCameras; i++) {
@@ -234,10 +333,10 @@ int write_cameras(FILE *bc_m2_file, BCM2 *ptr) {
 			write_Vec3DAnimBlock(bc_m2_file, &ptr->cameras[i].scal,
 					&ptr->camerasdata[i].scal);
 		}
+		fseek(bc_m2_file, ptr->header.ofsCameras, SEEK_SET);
+		fwrite(ptr->cameras, sizeof(Camera), ptr->header.nCameras, bc_m2_file);
+		fseek(bc_m2_file, 0, SEEK_END);
 	}
-	fseek(bc_m2_file, ptr->header.ofsCameras, SEEK_SET);
-	fwrite(ptr->cameras, sizeof(Camera), ptr->header.nCameras, bc_m2_file);
-	fseek(bc_m2_file, 0, SEEK_END);
 	return 0;
 }
 
@@ -253,11 +352,11 @@ int write_attachments(FILE *bc_m2_file, BCM2 *ptr) {
 			write_IntAnimBlock(bc_m2_file, &ptr->attachments[i].data,
 					&ptr->attachmentsdata[i].data);
 		}
+		fseek(bc_m2_file, ptr->header.ofsAttachments, SEEK_SET);
+		fwrite(ptr->attachments, sizeof(Attachment), ptr->header.nAttachments,
+				bc_m2_file);
+		fseek(bc_m2_file, 0, SEEK_END);
 	}
-	fseek(bc_m2_file, ptr->header.ofsAttachments, SEEK_SET);
-	fwrite(ptr->attachments, sizeof(Attachment), ptr->header.nAttachments,
-			bc_m2_file);
-	fseek(bc_m2_file, 0, SEEK_END);
 	return 0;
 }
 int write_events(FILE *bc_m2_file, BCM2 *ptr) {
@@ -273,7 +372,8 @@ int write_events(FILE *bc_m2_file, BCM2 *ptr) {
 			uint32 **ptrTimeList = &ptr->eventsdata[i].times;
 			if (ptrBlock->Ranges.n > 0) {
 				ptrBlock->Ranges.ofs = getPos(bc_m2_file);
-				fwrite((*ptrRangeList), sizeof(Range), ptrBlock->Ranges.n, bc_m2_file);
+				fwrite((*ptrRangeList), sizeof(Range), ptrBlock->Ranges.n,
+						bc_m2_file);
 				align(bc_m2_file);
 			}
 			if (ptrBlock->Times.n > 0) {
@@ -283,10 +383,10 @@ int write_events(FILE *bc_m2_file, BCM2 *ptr) {
 				align(bc_m2_file);
 			}
 		}
+		fseek(bc_m2_file, ptr->header.ofsEvents, SEEK_SET);
+		fwrite(ptr->events, sizeof(Event), ptr->header.nEvents, bc_m2_file);
+		fseek(bc_m2_file, 0, SEEK_END);
 	}
-	fseek(bc_m2_file, ptr->header.ofsEvents, SEEK_SET);
-	fwrite(ptr->events, sizeof(Event), ptr->header.nEvents, bc_m2_file);
-	fseek(bc_m2_file, 0, SEEK_END);
 	return 0;
 }
 
@@ -304,10 +404,10 @@ int write_colors(FILE *bc_m2_file, BCM2 *ptr) {
 			write_ShortAnimBlock(bc_m2_file, &ptr->colors[i].opacity,
 					&ptr->colorsdata[i].opacity);
 		}
+		fseek(bc_m2_file, ptr->header.ofsColors, SEEK_SET);
+		fwrite(ptr->colors, sizeof(ColorDef), ptr->header.nColors, bc_m2_file);
+		fseek(bc_m2_file, 0, SEEK_END);
 	}
-	fseek(bc_m2_file, ptr->header.ofsColors, SEEK_SET);
-	fwrite(ptr->colors, sizeof(ColorDef), ptr->header.nColors, bc_m2_file);
-	fseek(bc_m2_file, 0, SEEK_END);
 	return 0;
 }
 
@@ -323,11 +423,11 @@ int write_transparency(FILE *bc_m2_file, BCM2 *ptr) {
 			write_ShortAnimBlock(bc_m2_file, &ptr->transparencyrefs[i].alpha,
 					&ptr->transparencydata[i].alpha);
 		}
+		fseek(bc_m2_file, ptr->header.ofsTransparency, SEEK_SET);
+		fwrite(ptr->transparencyrefs, sizeof(Transparency),
+				ptr->header.nTransparency, bc_m2_file);
+		fseek(bc_m2_file, 0, SEEK_END);
 	}
-	fseek(bc_m2_file, ptr->header.ofsTransparency, SEEK_SET);
-	fwrite(ptr->transparencyrefs, sizeof(Transparency),
-			ptr->header.nTransparency, bc_m2_file);
-	fseek(bc_m2_file, 0, SEEK_END);
 	return 0;
 }
 
@@ -376,8 +476,8 @@ int write_model(FILE *bc_m2_file, BCM2 *ptr) {
 	//PlayAnimlookup
 	if (ptr->header.nPlayableAnimationLookup > 0) {
 		ptr->header.ofsPlayableAnimationLookup = getPos(bc_m2_file);
-		fwrite(ptr->PlayAnimLookup, sizeof(PlayAnimRecord), ptr->header.nPlayableAnimationLookup,
-				bc_m2_file);
+		fwrite(ptr->PlayAnimLookup, sizeof(PlayAnimRecord),
+				ptr->header.nPlayableAnimationLookup, bc_m2_file);
 		align(bc_m2_file);
 	}
 

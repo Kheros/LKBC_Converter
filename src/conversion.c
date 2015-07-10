@@ -20,6 +20,9 @@ int header_converter(BCM2 *ptr, LKModelHeader lk_header) {
 	ptr->header.id = lk_header.id;
 	//TODO version=0x107 if the model has particles
 	ptr->header.version = 0x104;
+	if (classic > 0) {
+		ptr->header.version = 0x100;
+	}
 	ptr->header.nameLength = lk_header.nameLength;
 	ptr->header.nameOfs = lk_header.nameOfs; //0x150
 	ptr->header.GlobalModelFlags = lk_header.GlobalModelFlags;
@@ -739,9 +742,10 @@ int texanims_converter(BCM2 *ptr, LKM2 lk_m2) {
 		int nAnimations = ptr->header.nAnimations;
 
 		//translation
-		convert_Vec3DAnimBlock(lk_m2.texanims[i].trans, lk_m2.texanimofs[i].trans,
-				lk_m2.texdata[i].trans, &ptr->texanims[i].trans,
-				&ptr->texdata[i].trans, animations, nAnimations);
+		convert_Vec3DAnimBlock(lk_m2.texanims[i].trans,
+				lk_m2.texanimofs[i].trans, lk_m2.texdata[i].trans,
+				&ptr->texanims[i].trans, &ptr->texdata[i].trans, animations,
+				nAnimations);
 		//rotation
 		convert_QuatAnimBlock(lk_m2.texanims[i].rot, lk_m2.texanimofs[i].rot,
 				lk_m2.texdata[i].rot, &ptr->texanims[i].rot,
