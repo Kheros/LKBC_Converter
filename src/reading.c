@@ -428,7 +428,7 @@ int read_attachments(FILE *lk_m2_file, LKM2 *ptr, FILE **anim_files) {
 	return -1;
 }
 
-int read_lights(FILE *lk_m2_file, LKM2 *ptr, FILE **anim_files) {//TODO Finish lights
+int read_lights(FILE *lk_m2_file, LKM2 *ptr, FILE **anim_files) {
 	if (ptr->header.nLights > 0) {
 		ptr->lights = malloc(
 				ptr->header.nLights * sizeof(LKLight));
@@ -942,7 +942,7 @@ int read_model(FILE *lk_m2_file, LKM2 *ptr) {
 	//Events
 	read_events(lk_m2_file, ptr);
 
-	//Lights TODO Finish it
+	//Lights
 	read_lights(lk_m2_file, ptr, anim_files);
 
 	//Cameras
@@ -957,7 +957,6 @@ int read_model(FILE *lk_m2_file, LKM2 *ptr) {
 	//TexAnims
 	read_texanims(lk_m2_file, ptr, anim_files);
 	/*TODO
-	 Lights;
 	 Ribbons;
 	 Particles
 	 */

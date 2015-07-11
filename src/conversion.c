@@ -560,6 +560,77 @@ void convert_IntAnimBlock(LKAnimationBlock LKBlock, AnimRefs AnimRefs,
 		ptrDataBlock->keys[0] = LKDataBlock[0].keys[0];
 	}
 }
+void convert_FloatAnimBlock(LKAnimationBlock LKBlock, AnimRefs AnimRefs,
+		Float_LKSubBlock *LKDataBlock, AnimationBlock *ptrBlock,
+		Float_SubBlock *ptrDataBlock, ModelAnimation *animations, int nAnimations) {
+	ptrBlock->Ranges.ofs = 0;
+	ptrBlock->Times.ofs = 0;
+	ptrBlock->Keys.ofs = 0;
+	ptrBlock->Ranges.n = 0;
+	ptrBlock->Times.n = 0;
+	ptrBlock->Keys.n = 0;
+	if (LKBlock.Times.n > 1) {
+		//Interpolation ranges
+		ptrBlock->Ranges.n = nAnimations + 1;
+		ptrDataBlock->ranges = malloc(ptrBlock->Ranges.n * sizeof(Range));
+		ptrDataBlock->ranges[nAnimations][0] = 0; //No idea why the last (int,int) is always 0
+		ptrDataBlock->ranges[nAnimations][1] = 0;
+		compute_ranges(LKBlock.Times.n, AnimRefs.times, &ptrDataBlock->ranges);
+
+		size_t keyframes_size = get_keyframes_number(LKBlock.Times.n,
+				AnimRefs.times); //Number of (Timestamp, key) tuples
+		ptrBlock->Times.n = keyframes_size;
+		ptrBlock->Keys.n = keyframes_size;
+		ptrDataBlock->times = malloc((keyframes_size) * sizeof(uint32));
+		ptrDataBlock->keys = malloc((keyframes_size) * sizeof(float));
+
+		int keyframes_index = 0; //Not reset when we finish the extraction of keys from 1 animation
+		int j;
+		for (j = 0; j < LKBlock.Times.n; j++) {
+			//Keyframes
+			if (AnimRefs.times[j].n > 1) { //scal.times[j].n = s_keys[j].n (everything is symmetric since it's a keyframe tuple)
+				int k;
+				for (k = 0; k < AnimRefs.times[j].n; k++) {	//Take each value for this anim and put it in the BC data
+					//TIMESTAMP
+					ptrDataBlock->times[keyframes_index] =
+							animations[j].timeStart + LKDataBlock[j].times[k]; //Start Time + animation-relative time
+					//KEY
+					ptrDataBlock->keys[keyframes_index] =
+							LKDataBlock[j].keys[k];
+					keyframes_index++;
+				}
+			} else if (AnimRefs.times[j].n == 1) {
+				//TIMESTAMP
+				ptrDataBlock->times[keyframes_index] = animations[j].timeStart;
+				ptrDataBlock->times[keyframes_index + 1] =
+						animations[j].timeEnd;
+				//KEY
+				ptrDataBlock->keys[keyframes_index] = LKDataBlock[j].keys[0];
+				ptrDataBlock->keys[keyframes_index + 1] =
+						LKDataBlock[j].keys[0];
+				keyframes_index += 2;
+			} else {						//n=0
+				//TIMESTAMP
+				ptrDataBlock->times[keyframes_index] = animations[j].timeStart;
+				ptrDataBlock->times[keyframes_index + 1] =
+						animations[j].timeEnd;
+				//KEY
+				ptrDataBlock->keys[keyframes_index] = 0;
+				ptrDataBlock->keys[keyframes_index + 1] = 0;
+				keyframes_index += 2;
+			}
+		}
+	} else if (LKBlock.Times.n == 1) { //Constant value across all animations for the bone
+		ptrBlock->Ranges.n = 0;
+		ptrBlock->Times.n = 1;
+		ptrBlock->Keys.n = 1;
+		ptrDataBlock->times = malloc(sizeof(uint32));
+		ptrDataBlock->keys = malloc(sizeof(float));
+		ptrDataBlock->times[0] = LKDataBlock[0].times[0];
+		ptrDataBlock->keys[0] = LKDataBlock[0].keys[0];
+	}
+}
+
 void convert_ShortAnimBlock(LKAnimationBlock LKBlock, AnimRefs AnimRefs,
 		Short_LKSubBlock *LKDataBlock, AnimationBlock *ptrBlock,
 		Short_SubBlock *ptrDataBlock, ModelAnimation *animations,
@@ -793,6 +864,89 @@ int attachments_converter(BCM2 *ptr, LKM2 lk_m2) {
 		//data
 		ptr->attachments[i].data.type = lk_m2.attachments[i].data.type;
 		ptr->attachments[i].data.seq = lk_m2.attachments[i].data.seq;
+	}
+	return 0;
+}
+
+int lights_converter(BCM2 *ptr, LKM2 lk_m2) {
+	ptr->lights = malloc(ptr->header.nLights * sizeof(Light));
+	ptr->lightsdata = malloc(
+			ptr->header.nLights * sizeof(LightsDataBlock));
+	int i;
+	for (i = 0; i < ptr->header.nLights; i++) {
+		//INIT
+		ModelAnimation *animations = ptr->animations;
+		int nAnimations = ptr->header.nAnimations;
+
+		//A_color
+		convert_Vec3DAnimBlock(lk_m2.lights[i].a_color,
+				lk_m2.lightsanimofs[i].a_color, lk_m2.lightsdata[i].a_color,
+				&ptr->lights[i].a_color, &ptr->lightsdata[i].a_color,
+				animations, nAnimations);
+		//A_intensity
+		convert_FloatAnimBlock(lk_m2.lights[i].a_intensity,
+				lk_m2.lightsanimofs[i].a_intensity, lk_m2.lightsdata[i].a_intensity,
+				&ptr->lights[i].a_intensity, &ptr->lightsdata[i].a_intensity,
+				animations, nAnimations);
+		//D_color
+		convert_Vec3DAnimBlock(lk_m2.lights[i].d_color,
+				lk_m2.lightsanimofs[i].d_color, lk_m2.lightsdata[i].d_color,
+				&ptr->lights[i].d_color, &ptr->lightsdata[i].d_color,
+				animations, nAnimations);
+		//D_intensity
+		convert_FloatAnimBlock(lk_m2.lights[i].d_intensity,
+				lk_m2.lightsanimofs[i].d_intensity, lk_m2.lightsdata[i].d_intensity,
+				&ptr->lights[i].d_intensity, &ptr->lightsdata[i].d_intensity,
+				animations, nAnimations);
+
+		//A_start
+		convert_FloatAnimBlock(lk_m2.lights[i].a_start,
+				lk_m2.lightsanimofs[i].a_start, lk_m2.lightsdata[i].a_start,
+				&ptr->lights[i].a_start, &ptr->lightsdata[i].a_start,
+				animations, nAnimations);
+		//A_end
+		convert_FloatAnimBlock(lk_m2.lights[i].a_end,
+				lk_m2.lightsanimofs[i].a_end, lk_m2.lightsdata[i].a_end,
+				&ptr->lights[i].a_end, &ptr->lightsdata[i].a_end,
+				animations, nAnimations);
+
+		//Unknown
+		convert_IntAnimBlock(lk_m2.lights[i].unknown,
+				lk_m2.lightsanimofs[i].unknown, lk_m2.lightsdata[i].unknown,
+				&ptr->lights[i].unknown, &ptr->lightsdata[i].unknown,
+				animations, nAnimations);
+
+		ptr->lights[i].ID = lk_m2.lights[i].ID;
+		ptr->lights[i].bone = lk_m2.lights[i].bone;
+		int j;
+		for (j = 0; j < 3; j++) {
+			ptr->lights[i].position[j] = lk_m2.lights[i].position[j];
+		}
+
+		//A_color
+		ptr->lights[i].a_color.type = lk_m2.lights[i].a_color.type;
+		ptr->lights[i].a_color.seq = lk_m2.lights[i].a_color.seq;
+		//A_intensity
+		ptr->lights[i].a_intensity.type = lk_m2.lights[i].a_intensity.type;
+		ptr->lights[i].a_intensity.seq = lk_m2.lights[i].a_intensity.seq;
+
+		//D_color
+		ptr->lights[i].d_color.type = lk_m2.lights[i].d_color.type;
+		ptr->lights[i].d_color.seq = lk_m2.lights[i].d_color.seq;
+		//D_intensity
+		ptr->lights[i].d_intensity.type = lk_m2.lights[i].d_intensity.type;
+		ptr->lights[i].d_intensity.seq = lk_m2.lights[i].d_intensity.seq;
+
+		//A_start
+		ptr->lights[i].a_start.type = lk_m2.lights[i].a_start.type;
+		ptr->lights[i].a_start.seq = lk_m2.lights[i].a_start.seq;
+		//A_end
+		ptr->lights[i].a_end.type = lk_m2.lights[i].a_end.type;
+		ptr->lights[i].a_end.seq = lk_m2.lights[i].a_end.seq;
+
+		//Unknown
+		ptr->lights[i].unknown.type = lk_m2.lights[i].unknown.type;
+		ptr->lights[i].unknown.seq = lk_m2.lights[i].unknown.seq;
 	}
 	return 0;
 }
@@ -1265,6 +1419,9 @@ int lk_to_bc(LKM2 lk_m2, Skin *skins, BCM2 *ptr) {
 
 	//Events
 	events_converter(ptr, lk_m2);
+
+	//Lights
+	lights_converter(ptr, lk_m2);
 
 	//Cameras
 	cameras_converter(ptr, lk_m2);

@@ -214,6 +214,16 @@ void write_ShortAnimBlock(FILE *bc_m2_file, AnimationBlock *ptrBlock,
 		align(bc_m2_file);
 	}
 }
+void write_FloatAnimBlock(FILE *bc_m2_file, AnimationBlock *ptrBlock,
+		Float_SubBlock *ptrDataBlock) {
+	write_rangestimes(bc_m2_file, ptrBlock, &ptrDataBlock->ranges,
+			&ptrDataBlock->times);
+	if (ptrBlock->Keys.n > 0) {
+		ptrBlock->Keys.ofs = getPos(bc_m2_file);
+		fwrite(ptrDataBlock->keys, sizeof(float), ptrBlock->Keys.n, bc_m2_file);
+		align(bc_m2_file);
+	}
+}
 
 /**
  * Cast a ModelBoneDef to a CLModelBoneDef (Classic) structure to adjust it when "-c" is used.
@@ -359,6 +369,47 @@ int write_attachments(FILE *bc_m2_file, BCM2 *ptr) {
 	}
 	return 0;
 }
+
+int write_lights(FILE *bc_m2_file, BCM2 *ptr) {
+	if (ptr->header.nLights > 0) {
+		ptr->header.ofsLights = getPos(bc_m2_file);
+		fwrite(ptr->lights, sizeof(Light), ptr->header.nLights,
+				bc_m2_file);
+		align(bc_m2_file);
+		int i;
+		for (i = 0; i < ptr->header.nLights; i++) {
+			//a_color
+			write_Vec3DAnimBlock(bc_m2_file, &ptr->lights[i].a_color,
+					&ptr->lightsdata[i].a_color);
+			//a_intensity
+			write_FloatAnimBlock(bc_m2_file, &ptr->lights[i].a_intensity,
+					&ptr->lightsdata[i].a_intensity);
+			//d_color
+			write_Vec3DAnimBlock(bc_m2_file, &ptr->lights[i].d_color,
+					&ptr->lightsdata[i].d_color);
+			//d_intensity
+			write_FloatAnimBlock(bc_m2_file, &ptr->lights[i].d_intensity,
+					&ptr->lightsdata[i].d_intensity);
+
+			//a_start
+			write_FloatAnimBlock(bc_m2_file, &ptr->lights[i].a_start,
+					&ptr->lightsdata[i].a_start);
+			//a_end
+			write_FloatAnimBlock(bc_m2_file, &ptr->lights[i].a_end,
+					&ptr->lightsdata[i].a_end);
+
+			//unknown
+			write_IntAnimBlock(bc_m2_file, &ptr->lights[i].unknown,
+					&ptr->lightsdata[i].unknown);
+		}
+		fseek(bc_m2_file, ptr->header.ofsLights, SEEK_SET);
+		fwrite(ptr->lights, sizeof(Light), ptr->header.nLights,
+				bc_m2_file);
+		fseek(bc_m2_file, 0, SEEK_END);
+	}
+	return 0;
+}
+
 int write_events(FILE *bc_m2_file, BCM2 *ptr) {
 	if (ptr->header.nEvents > 0) {
 		ptr->header.ofsEvents = getPos(bc_m2_file);
@@ -588,6 +639,9 @@ int write_model(FILE *bc_m2_file, BCM2 *ptr) {
 
 	//Events
 	write_events(bc_m2_file, ptr);
+
+	//Lights
+	write_lights(bc_m2_file, ptr);
 
 	//Cameras
 	write_cameras(bc_m2_file, ptr);
