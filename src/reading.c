@@ -631,6 +631,7 @@ int read_model_bc(FILE *bc_m2_file, BCM2 *ptr) {
 	fseek(bc_m2_file, 0, SEEK_SET);
 	fread(&ptr->header, sizeof(ModelHeader), 1, bc_m2_file);
 
+	/*
 	//Animations
 	ptr->animations = malloc(ptr->header.nAnimations * sizeof(ModelAnimation));
 	fseek(bc_m2_file, ptr->header.ofsAnimations, SEEK_SET);
@@ -722,6 +723,7 @@ int read_model_bc(FILE *bc_m2_file, BCM2 *ptr) {
 			}
 		}
 	}
+	*/
 	//Events
 	if (ptr->header.nEvents > 0) { //I think lights and other non-geometric things don't have any
 		ptr->events = malloc(ptr->header.nEvents * sizeof(Event));
@@ -730,7 +732,7 @@ int read_model_bc(FILE *bc_m2_file, BCM2 *ptr) {
 		fread(ptr->events, sizeof(Event), ptr->header.nEvents, bc_m2_file);
 		int i;
 		for (i = 0; i < ptr->header.nEvents; i++) {
-			//Translation
+			//Content
 			if (ptr->events[i].timer.Ranges.n > 0) {
 				ptr->eventsdata[i].ranges = malloc(
 						ptr->events[i].timer.Ranges.n * sizeof(Range));
@@ -746,6 +748,42 @@ int read_model_bc(FILE *bc_m2_file, BCM2 *ptr) {
 				SEEK_SET);
 				fread(ptr->eventsdata[i].times, sizeof(uint32),
 						ptr->events[i].timer.Times.n, bc_m2_file);
+			}
+		}
+	}
+
+	//Attachments
+	if (ptr->header.nAttachments > 0) { //I think lights and other non-geometric things don't have any
+		ptr->attachments = malloc(ptr->header.nAttachments * sizeof(Attachment));
+		ptr->attachmentsdata = malloc(ptr->header.nAttachments * sizeof(AttachmentsDataBlock));
+		fseek(bc_m2_file, ptr->header.ofsAttachments, SEEK_SET);
+		fread(ptr->attachments, sizeof(Attachment), ptr->header.nAttachments, bc_m2_file);
+		int i;
+		for (i = 0; i < ptr->header.nAttachments; i++) {
+			//Data
+			if (ptr->attachments[i].data.Ranges.n > 0) {
+				ptr->attachmentsdata[i].data.ranges = malloc(
+						ptr->attachments[i].data.Ranges.n * sizeof(Range));
+				fseek(bc_m2_file, ptr->attachments[i].data.Ranges.ofs,
+				SEEK_SET);
+				fread(ptr->attachmentsdata[i].data.ranges, sizeof(Range),
+						ptr->attachments[i].data.Ranges.n, bc_m2_file);
+			}
+			if (ptr->attachments[i].data.Times.n > 0) {
+				ptr->attachmentsdata[i].data.times = malloc(
+						ptr->attachments[i].data.Times.n * sizeof(uint32));
+				fseek(bc_m2_file, ptr->attachments[i].data.Times.ofs,
+				SEEK_SET);
+				fread(ptr->attachmentsdata[i].data.times, sizeof(uint32),
+						ptr->attachments[i].data.Times.n, bc_m2_file);
+			}
+			if (ptr->attachments[i].data.Keys.n > 0) {
+				ptr->attachmentsdata[i].data.keys = malloc(
+						ptr->attachments[i].data.Keys.n * sizeof(int));
+				fseek(bc_m2_file, ptr->attachments[i].data.Keys.ofs,
+				SEEK_SET);
+				fread(ptr->attachmentsdata[i].data.keys, sizeof(int),
+						ptr->attachments[i].data.Keys.n, bc_m2_file);
 			}
 		}
 	}

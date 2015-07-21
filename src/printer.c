@@ -143,6 +143,7 @@ void print_views(BCM2 model) {
 		for (j = 0; j < model.views[i].header.nSubmeshes; j++) {
 			printf("\t[Submesh #%d]\n", j);
 			printf("\tID : %d\n", model.views[i].Submeshes[j].ID);
+			printf("\tLevel : %d\n", model.views[i].Submeshes[j].Level);
 			printf("\tStartVertex : %d\n",
 					model.views[i].Submeshes[j].StartVertex);
 			printf("\tnVertices : %d\n", model.views[i].Submeshes[j].nVertices);
@@ -166,7 +167,7 @@ void print_views(BCM2 model) {
  * @param flags What is printed depends on the three lower bits. Order : translation, rotation, scaling.
  * Example (prints translation and scaling) : 0b101, so it's 5. Values go from 0(0b000, nothing) to 7(0b111, everything).
  */
-void print_bones(BCM2 model, char flags) {
+void print_bones_bc(BCM2 model, char flags) {
 	int i;
 	for (i = 0; i < model.header.nBones; i++) {
 		printf("[Bone #%d]\n", i);
@@ -373,11 +374,45 @@ void print_events_bc(BCM2 model) {
 	}
 }
 
+void print_attachments_bc(BCM2 model) {
+	int i;
+	for (i = 0; i < model.header.nAttachments; i++) {
+		printf("[Attachment #%d]\n", i);
+		printf("ID: %d\n", model.attachments[i].ID);
+		printf("Bone: %d\n", model.attachments[i].bone);
+		printf("Position Vector: (%f,%f,%f)\n", model.attachments[i].position[0],
+				model.attachments[i].position[1], model.attachments[i].position[2]);
+		printf("Type: %d\n", model.attachments[i].data.type);
+		printf("Seq: %d\n", model.attachments[i].data.seq);
+		printf("Number of ranges: %d\n", model.attachments[i].data.Ranges.n);
+		printf("Number of times & keys: %d\n", model.attachments[i].data.Times.n);
+		//Data
+		if (model.attachments[i].data.Ranges.n > 0) {
+			printf("\tRanges:\n");
+			int j;
+			for (j = 0; j < model.attachments[i].data.Ranges.n; j++) {
+				printf("\t(%d,%d)\n", model.attachmentsdata[i].data.ranges[j][0],
+						model.attachmentsdata[i].data.ranges[j][1]);
+			}
+			printf("\n");
+		}
+		if (model.attachments[i].data.Times.n > 0) {
+			printf("\tTimes and keys:\n");
+			int j;
+			for (j = 0; j < model.attachments[i].data.Times.n; j++) {
+				printf("\t\t%d: (%d)\n",
+				model.attachmentsdata[i].data.times[j], model.attachmentsdata[i].data.keys[j]);
+			}
+		}
+		printf("\n");
+	}
+}
+
 /**
  * ATM print Translation timestamps of every bone in a LK model
  * @param model
  */
-void print_bonesdata(LKM2 model) {
+void print_bones_lk(LKM2 model) {
 	int i;
 	for (i = 0; i < model.header.nBones; i++) {
 		LKModelBoneDef lk_bone = model.bones[i];
@@ -426,7 +461,7 @@ void print_vertices_bc(BCM2 model) {
 	}
 }
 
-void print_animlookup(BCM2 model) {
+void print_animlookup_bc(BCM2 model) {
 	printf("[Animation Lookup]\n");
 	printf("PhysicalID \t-\t AnimID\n");
 	int i;
@@ -434,7 +469,7 @@ void print_animlookup(BCM2 model) {
 		printf("%d \t\t|\t %d\n", model.AnimLookup[i], i);
 	}
 }
-void print_playanimlookup(BCM2 model) {
+void print_playanimlookup_bc(BCM2 model) {
 	printf("[Playable Animation Lookup]\n");
 	printf("AnimID,Flags \t-\t In game ID\n");
 	int i;
@@ -444,6 +479,14 @@ void print_playanimlookup(BCM2 model) {
 	}
 }
 
+void print_attachlookup_bc(BCM2 model) {
+	printf("[Attachment Lookup]\n");
+	printf("PhysicalID \t-\t AttachID\n");
+	int i;
+	for (i = 0; i < model.header.nAttachLookup; i++) {
+		printf("%d \t\t|\t %d\n", model.AttachLookup[i], i);
+	}
+}
 void print_texnames_bc(BCM2 model) {
 	int i;
 	for (i = 0; i < model.header.nTextures; i++) {
@@ -557,6 +600,12 @@ void print_boneheaders_bc(BCM2 model) {
 	}
 }
 
+/**
+ * Print binary for any datatype
+ * @param size
+ * @param ptr
+ * @author Enno Groper
+ */
 //assumes little endian
 void printBits(size_t const size, void const * const ptr) {
 	unsigned char *b = (unsigned char*) ptr;

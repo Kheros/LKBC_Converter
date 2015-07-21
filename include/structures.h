@@ -745,7 +745,7 @@ typedef struct LKM2 {
 	LKAttachment *attachments;
 	AttachmentsRefBlock *attachmentsanimofs;
 	LKAttachmentsDataBlock *attachmentsdata;
-	uint16 *AttachLookup;
+	int16 *AttachLookup;
 
 	LKEvent *events;
 	EventsRefBlock *eventsanimofs;
@@ -755,7 +755,7 @@ typedef struct LKM2 {
 	CamerasRefBlock *camerasanimofs;
 	LKCamerasDataBlock *camerasdata;
 	uint16 *CameraLookup;
-/*TODO  Lights,
+/*TODO
  * RibbonEmitters, ParticleEmmiters.
  */
 } LKM2;
@@ -818,7 +818,7 @@ typedef struct BCM2 {
 
 	Attachment *attachments;
 	AttachmentsDataBlock *attachmentsdata;
-	uint16 *AttachLookup;
+	int16 *AttachLookup;
 
 	Event *events;
 	EventsDataBlock *eventsdata;

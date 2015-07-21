@@ -14,6 +14,11 @@
 #include "fcaseopen.h"
 #include "colors.h"
 
+/** [Option] Turns the converter in a tool to analyze events in a BC model and write unknown IDs.
+ * File id_list.txt will be written if new unknown IDs have been discovered.
+ * 1 = ON, 0 = OFF.
+ */
+#define ANALYZER_MODE 0
 /** Skin file extension */
 #define SKIN_SUFF ".skin"
 /** M2 file extension */
@@ -118,6 +123,22 @@ int main(int argc, char *argv[]) {
 	strncpy(model_name, m2_name, m2_name_length - 3);
 	model_name[m2_name_length - 3] = 0;
 
+	//ANALYZER MODE
+	if (ANALYZER_MODE) {
+		printf(KGRN "[Opening M2/BC file for analysis]\n" RESET);
+		printf("\t%s\n", m2_name);
+		FILE *m2_file = fcaseopen(m2_name, "r+b");
+		if (m2_file == NULL) {
+			fprintf(stderr, KRED "[Error] " RESET "M2 file %s not found.\n",
+					m2_name);
+			exit(EXIT_FAILURE);
+		}
+		BCM2 analyzed_model;
+		read_model_bc(m2_file, &analyzed_model);
+		analyze_events(analyzed_model);
+		exit(EXIT_SUCCESS);
+	}
+
 	//Reading files
 	printf(KCYN "[Opening M2/WotLK file]\n" RESET);
 	printf("\t%s\n", m2_name);
@@ -159,22 +180,25 @@ int main(int argc, char *argv[]) {
 		print_anims_bc(bc_model);
 	}
 	if (show_bones > 0) {
-		print_bones(bc_model, 7);
+		print_bones_bc(bc_model, 7);
 	}
 	if (show_textures > 0) {
 		print_texnames_bc(bc_model);
 	}
+	print_attachments_bc(bc_model);
 
 	//Reads the genuine TBC file. Useful to compare the models.
 	/*
-	 FILE *genuine_m2_file = fcaseopen("MountedKnightGenuine.m2", "r+b");
-	 if (genuine_m2_file == NULL) {
-	 fprintf(stderr, "Debug file opening error.\nIf you have this error using a release version, please report issue on Github.\n");
-	 exit(EXIT_FAILURE);
-	 }
-	 BCM2 genuine_model;
-	 read_model_bc(genuine_m2_file, &genuine_model);
-	 */
+	FILE *genuine_m2_file = fcaseopen("FrogGenuine.m2", "r+b");
+	if (genuine_m2_file == NULL) {
+		fprintf(stderr,
+				"Debug file opening error.\nIf you have this error using a release version, please report issue on Github.\n");
+		exit(EXIT_FAILURE);
+	}
+	BCM2 genuine_model;
+	read_model_bc(genuine_m2_file, &genuine_model);
+	print_attachments_bc(genuine_model);
+	*/
 
 	//Writing
 	char *new_name;

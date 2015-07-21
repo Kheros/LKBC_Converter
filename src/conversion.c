@@ -32,7 +32,7 @@ int header_converter(BCM2 *ptr, LKModelHeader lk_header) {
 	ptr->header.ofsAnimations = lk_header.ofsAnimations;
 	ptr->header.nAnimationLookup = lk_header.nAnimationLookup;
 	ptr->header.ofsAnimationLookup = lk_header.ofsAnimationLookup;
-	ptr->header.nPlayableAnimationLookup = 0x00; //TODO Placeholder. I don't know where this data is in WotLK.
+	ptr->header.nPlayableAnimationLookup = 0x00;
 	ptr->header.ofsPlayableAnimationLookup = 0x00;
 	ptr->header.nBones = lk_header.nBones;
 	ptr->header.ofsBones = lk_header.ofsBones;
@@ -94,8 +94,6 @@ int header_converter(BCM2 *ptr, LKModelHeader lk_header) {
 	}
 
 	//TODO Unimplemented features
-	ptr->header.nLights = 0;
-	ptr->header.ofsLights = 0;
 	ptr->header.nRibbonEmitters = 0;
 	ptr->header.ofsRibbonEmitters = 0;
 	ptr->header.nParticleEmitters = 0;
@@ -562,7 +560,8 @@ void convert_IntAnimBlock(LKAnimationBlock LKBlock, AnimRefs AnimRefs,
 }
 void convert_FloatAnimBlock(LKAnimationBlock LKBlock, AnimRefs AnimRefs,
 		Float_LKSubBlock *LKDataBlock, AnimationBlock *ptrBlock,
-		Float_SubBlock *ptrDataBlock, ModelAnimation *animations, int nAnimations) {
+		Float_SubBlock *ptrDataBlock, ModelAnimation *animations,
+		int nAnimations) {
 	ptrBlock->Ranges.ofs = 0;
 	ptrBlock->Times.ofs = 0;
 	ptrBlock->Keys.ofs = 0;
@@ -840,6 +839,7 @@ int texanims_converter(BCM2 *ptr, LKM2 lk_m2) {
 }
 
 int attachments_converter(BCM2 *ptr, LKM2 lk_m2) {
+	fprintf(stderr,"NUMBER OF ATTACHMENTS : %d\n", ptr->header.nAttachments);//FIXME
 	ptr->attachments = malloc(ptr->header.nAttachments * sizeof(Attachment));
 	ptr->attachmentsdata = malloc(
 			ptr->header.nAttachments * sizeof(AttachmentsDataBlock));
@@ -854,6 +854,20 @@ int attachments_converter(BCM2 *ptr, LKM2 lk_m2) {
 				lk_m2.attachmentsanimofs[i].data, lk_m2.attachmentsdata[i].data,
 				&ptr->attachments[i].data, &ptr->attachmentsdata[i].data,
 				animations, nAnimations);
+
+		//FIXME Experimental way to fix Attachments for recent models
+		if (ptr->attachments[i].data.Times.n == 0) {
+			ptr->attachments[i].data.Ranges.n = 0;
+			ptr->attachments[i].data.Ranges.ofs = 0;
+			ptr->attachmentsdata[i].data.times = malloc(sizeof(uint32));
+			ptr->attachmentsdata[i].data.times[0] = 0;
+			ptr->attachments[i].data.Times.n = 1;
+			ptr->attachments[i].data.Times.ofs = 0;
+			ptr->attachmentsdata[i].data.keys = malloc(sizeof(int));
+			ptr->attachmentsdata[i].data.keys[0] = 1;
+			ptr->attachments[i].data.Keys.n = 1;
+			ptr->attachments[i].data.Keys.ofs = 0;
+		}
 
 		ptr->attachments[i].ID = lk_m2.attachments[i].ID;
 		ptr->attachments[i].bone = lk_m2.attachments[i].bone;
@@ -870,8 +884,7 @@ int attachments_converter(BCM2 *ptr, LKM2 lk_m2) {
 
 int lights_converter(BCM2 *ptr, LKM2 lk_m2) {
 	ptr->lights = malloc(ptr->header.nLights * sizeof(Light));
-	ptr->lightsdata = malloc(
-			ptr->header.nLights * sizeof(LightsDataBlock));
+	ptr->lightsdata = malloc(ptr->header.nLights * sizeof(LightsDataBlock));
 	int i;
 	for (i = 0; i < ptr->header.nLights; i++) {
 		//INIT
@@ -885,9 +898,9 @@ int lights_converter(BCM2 *ptr, LKM2 lk_m2) {
 				animations, nAnimations);
 		//A_intensity
 		convert_FloatAnimBlock(lk_m2.lights[i].a_intensity,
-				lk_m2.lightsanimofs[i].a_intensity, lk_m2.lightsdata[i].a_intensity,
-				&ptr->lights[i].a_intensity, &ptr->lightsdata[i].a_intensity,
-				animations, nAnimations);
+				lk_m2.lightsanimofs[i].a_intensity,
+				lk_m2.lightsdata[i].a_intensity, &ptr->lights[i].a_intensity,
+				&ptr->lightsdata[i].a_intensity, animations, nAnimations);
 		//D_color
 		convert_Vec3DAnimBlock(lk_m2.lights[i].d_color,
 				lk_m2.lightsanimofs[i].d_color, lk_m2.lightsdata[i].d_color,
@@ -895,9 +908,9 @@ int lights_converter(BCM2 *ptr, LKM2 lk_m2) {
 				animations, nAnimations);
 		//D_intensity
 		convert_FloatAnimBlock(lk_m2.lights[i].d_intensity,
-				lk_m2.lightsanimofs[i].d_intensity, lk_m2.lightsdata[i].d_intensity,
-				&ptr->lights[i].d_intensity, &ptr->lightsdata[i].d_intensity,
-				animations, nAnimations);
+				lk_m2.lightsanimofs[i].d_intensity,
+				lk_m2.lightsdata[i].d_intensity, &ptr->lights[i].d_intensity,
+				&ptr->lightsdata[i].d_intensity, animations, nAnimations);
 
 		//A_start
 		convert_FloatAnimBlock(lk_m2.lights[i].a_start,
@@ -907,8 +920,8 @@ int lights_converter(BCM2 *ptr, LKM2 lk_m2) {
 		//A_end
 		convert_FloatAnimBlock(lk_m2.lights[i].a_end,
 				lk_m2.lightsanimofs[i].a_end, lk_m2.lightsdata[i].a_end,
-				&ptr->lights[i].a_end, &ptr->lightsdata[i].a_end,
-				animations, nAnimations);
+				&ptr->lights[i].a_end, &ptr->lightsdata[i].a_end, animations,
+				nAnimations);
 
 		//Unknown
 		convert_IntAnimBlock(lk_m2.lights[i].unknown,
@@ -1003,6 +1016,110 @@ int cameras_converter(BCM2 *ptr, LKM2 lk_m2) {
 		ptr->cameras[i].scal.seq = lk_m2.cameras[i].scal.seq;
 	}
 	return 0;
+}
+
+//Events
+#define EV_NUMBER 16
+char *bc_events[EV_NUMBER] = { 0 };
+int ev_init = 0;
+void init_bc_events() {
+	ev_init = 1;
+	//Without Burning Crusade source, the only way to find these is by checking every BC m2. See analyze_events().
+	bc_events[0] = "$BTH";
+	bc_events[1] = "$CAH";
+	bc_events[2] = "$CPP";
+	bc_events[3] = "$CSS";
+	bc_events[4] = "$CST";
+	bc_events[5] = "$HIT";
+	bc_events[6] = "$DTH";
+	bc_events[7] = "$FSD";
+	bc_events[8] = "$RL0";
+	bc_events[9] = "$RL1";
+	bc_events[10] = "$RR0";
+	bc_events[11] = "$RR1";
+	bc_events[12] = "$FL0";
+	bc_events[13] = "$FL1";
+	bc_events[14] = "$FR0";
+	bc_events[15] = "$FR1";
+}
+int is_bc_event(char *ID) {
+	if (ev_init == 0) {
+		init_bc_events();
+	}
+	int i;
+	for (i = 0; i < EV_NUMBER; i++) {
+		if (strcmp(ID, bc_events[i]) == 0) {
+			return 1;
+		}
+	}
+	return 0;
+}
+
+void analyze_events(BCM2 model) {
+	if (model.header.nEvents > 0) {
+		int new_events_number = model.header.nEvents;
+		int i;
+		for (i = 0; i < model.header.nEvents; i++) {
+			if (is_bc_event(model.events[i].ID)) {
+				new_events_number--;
+			}
+		}
+		if (new_events_number > 0) {
+			char id_list[64][4];
+			int j = 0;
+			for (i = 0; i < model.header.nEvents; i++) {
+				if (is_bc_event(model.events[i].ID) == 0) {	//if it has an ID not currently known as a BC Event ID
+					id_list[j][0] = model.events[i].ID[0];
+					id_list[j][1] = model.events[i].ID[1];
+					id_list[j][2] = model.events[i].ID[2];
+					id_list[j][3] = model.events[i].ID[3];
+					j++;
+				}
+			}
+			//Append to the file
+			FILE *list = fopen("id_list.txt", "a");
+			for (i = 0; i < new_events_number; i++) {
+				//fputs(model_name, list);
+				//fputs("\t", list);
+				char ID[5];
+				ID[0] = id_list[i][0];
+				ID[1] = id_list[i][1];
+				ID[2] = id_list[i][2];
+				ID[3] = id_list[i][3];
+				ID[4] = (char) 0;
+				fputs(ID, list);
+				fputs("\n", list);
+			}
+			fclose(list);
+		}
+	}
+}
+
+/**
+ * Filter events in LKM2 structure to remove events with post-BC identifiers
+ * @param ptr
+ */
+LKEvent *events_filter(LKM2 model) {
+	int final_number = model.header.nEvents;
+	int i;
+	for (i = 0; i < model.header.nEvents; i++) {
+		if (!is_bc_event(model.events[i].ID)) {	//if it has an incompatible ID
+			final_number--;
+		}
+	}
+	if (final_number > 0) {
+		LKEvent *final_events = malloc(final_number * sizeof(LKEvent));
+		int j = 0;
+		for (i = 0; i < model.header.nEvents; i++) {
+			if (is_bc_event(model.events[i].ID)) {
+				final_events[j] = model.events[i];
+				j++;
+			}
+		}
+		return final_events;
+	} else {
+		return model.events;
+	}
 }
 
 int events_converter(BCM2 *ptr, LKM2 lk_m2) {
@@ -1418,6 +1535,7 @@ int lk_to_bc(LKM2 lk_m2, Skin *skins, BCM2 *ptr) {
 	ptr->AttachLookup = lk_m2.AttachLookup;
 
 	//Events
+	//lk_m2.events = events_filter(&lk_m2); //FIXME
 	events_converter(ptr, lk_m2);
 
 	//Lights
@@ -1430,7 +1548,6 @@ int lk_to_bc(LKM2 lk_m2, Skin *skins, BCM2 *ptr) {
 	//TexAnims
 	texanims_converter(ptr, lk_m2);
 	/*TODO
-	 Lights;
 	 Ribbons;
 	 Particles
 	 */

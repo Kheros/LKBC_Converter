@@ -7,13 +7,6 @@
 int init = 0;
 short Fallback[512] = {0};
 
-short get_BCID(short ID) {
-	if (ID < 226) {
-		return ID;
-	}
-	return get_BCID(Fallback[ID]);
-}
-
 void init_Fallback() {//Extracted from AnimationData.dbc (TBC 2.4.3)
 	init = 1;
 	Fallback[0] = 147;
