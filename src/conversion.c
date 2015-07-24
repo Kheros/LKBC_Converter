@@ -17,7 +17,10 @@
  * @return A TBC Header.
  */
 int header_converter(BCM2 *ptr, LKModelHeader lk_header) {
-	ptr->header.id = lk_header.id;
+	ptr->header.id[0] = lk_header.id[0];
+	ptr->header.id[1] = lk_header.id[1];
+	ptr->header.id[2] = lk_header.id[2];
+	ptr->header.id[3] = lk_header.id[3];
 	//TODO version=0x107 if the model has particles
 	ptr->header.version = 0x104;
 	if (classic > 0) {
@@ -839,7 +842,6 @@ int texanims_converter(BCM2 *ptr, LKM2 lk_m2) {
 }
 
 int attachments_converter(BCM2 *ptr, LKM2 lk_m2) {
-	fprintf(stderr,"NUMBER OF ATTACHMENTS : %d\n", ptr->header.nAttachments);//FIXME
 	ptr->attachments = malloc(ptr->header.nAttachments * sizeof(Attachment));
 	ptr->attachmentsdata = malloc(
 			ptr->header.nAttachments * sizeof(AttachmentsDataBlock));
@@ -855,7 +857,7 @@ int attachments_converter(BCM2 *ptr, LKM2 lk_m2) {
 				&ptr->attachments[i].data, &ptr->attachmentsdata[i].data,
 				animations, nAnimations);
 
-		//FIXME Experimental way to fix Attachments for recent models
+		//New models don't have Attachments with 1 as value
 		if (ptr->attachments[i].data.Times.n == 0) {
 			ptr->attachments[i].data.Ranges.n = 0;
 			ptr->attachments[i].data.Ranges.ofs = 0;

@@ -800,9 +800,19 @@ int read_model(FILE *lk_m2_file, LKM2 *ptr) {
 	//Header
 	fseek(lk_m2_file, 0, SEEK_SET);
 	fread(&ptr->header, sizeof(LKModelHeader), 1, lk_m2_file);
+	char real_id[5];
+	real_id[0] = ptr->header.id[0];
+	real_id[1] = ptr->header.id[1];
+	real_id[2] = ptr->header.id[2];
+	real_id[3] = ptr->header.id[3];
+	real_id[4] = '\0';
+	if(strcmp("MD20", real_id)){
+		fprintf(stderr, "This is not an M2 file.\n");
+		exit(EXIT_FAILURE);
+	}
 	if (ptr->header.version != 264) {
 		fprintf(stderr, "Incorrect model version (%d).\n", ptr->header.version);
-		fprintf(stderr, "A WotLK model (264) is expected\n");
+		fprintf(stderr, "A WotLK model (264) is expected.\n");
 		exit(EXIT_FAILURE);
 	}
 

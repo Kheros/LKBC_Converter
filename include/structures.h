@@ -32,7 +32,7 @@ typedef struct ArrayRef { //Can point to absolutely anything
 } ArrayRef;
 
 typedef struct LKModelHeader {
-	uint32 id;								//0x000
+	char id[4];								//0x000
 	uint32 version;							//0x004
 	uint32 nameLength;						//0x008
 	uint32 nameOfs;							//0x00c
@@ -110,7 +110,7 @@ typedef struct LKModelHeader {
 } LKModelHeader;
 
 typedef struct ModelHeader {
-	uint32 id;								//0x000
+	char id[4];								//0x000
 	uint32 version;							//0x004
 	uint32 nameLength;						//0x008
 	uint32 nameOfs;							//0x00c

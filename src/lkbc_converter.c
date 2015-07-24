@@ -63,6 +63,7 @@ void show_help() {
 	fprintf(stderr,
 			"Usage : lkbc_converter [OPTIONS] <model name> <target name>\n");
 	fprintf(stderr, " -t\tShow the textures your model need to work.\n");
+	fprintf(stderr, " Options for developers :\n");
 	fprintf(stderr, " -a\tShow animations data.\n");
 	fprintf(stderr, " -b\tShow bones data.\n");
 	fprintf(stderr,
@@ -75,7 +76,6 @@ int main(int argc, char *argv[]) {
 	printf("============================\n");
 	printf("= LKBC_Converter by Koward =\n");
 	printf("==v0.4-alpha================\n");
-	printf("\n");
 	char *m2_name = 0;
 	char *target_name = 0;
 	short show_anims = 0;
@@ -185,7 +185,7 @@ int main(int argc, char *argv[]) {
 	if (show_textures > 0) {
 		print_texnames_bc(bc_model);
 	}
-	print_attachments_bc(bc_model);
+	//print_attachments_bc(bc_model);
 
 	//Reads the genuine TBC file. Useful to compare the models.
 	/*
