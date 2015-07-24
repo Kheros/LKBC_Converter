@@ -841,7 +841,6 @@ int read_model(FILE *lk_m2_file, LKM2 *ptr) {
 	//Animation Files
 	FILE **anim_files;
 	anim_files = malloc(ptr->header.nAnimations * sizeof(FILE *));
-	printf("[Opening Anim files]\n");
 	int i;
 	for (i = 0; i < ptr->header.nAnimations; i++) {
 		if (((ptr->animations[i].flags & 0x40) == 0)

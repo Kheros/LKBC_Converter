@@ -73,9 +73,7 @@ void show_help() {
  * Main function
  */
 int main(int argc, char *argv[]) {
-	printf("============================\n");
-	printf("= LKBC_Converter by Koward =\n");
-	printf("==v0.4-alpha================\n");
+	printf("[[ LKBC_Converter by Koward v0.5-alpha ]]\n");
 	char *m2_name = 0;
 	char *target_name = 0;
 	short show_anims = 0;
@@ -154,7 +152,6 @@ int main(int argc, char *argv[]) {
 
 	FILE **skin_files;
 	skin_files = malloc(lk_model.header.nViews * sizeof(FILE *));
-	printf("[Opening Skin files]\n");
 	for (i = 0; i < lk_model.header.nViews; i++) {
 		printf("\t%s\n", skin_name(m2_name, i));
 		skin_files[i] = fcaseopen(skin_name(m2_name, i), "r+b");
@@ -168,12 +165,16 @@ int main(int argc, char *argv[]) {
 	printf("==> ");
 	Skin *skins;
 	read_skins(skin_files, &skins, lk_model.header.nViews);
-	printf("Model successfully read.\n\n");
+	printf("Model successfully read.\n");
+	for (i = 0; i < lk_model.header.nViews; i++) {
+		fclose(skin_files[i]);
+	}
+	fclose(lk_m2_file);
 
 	//Converting
 	BCM2 bc_model;
 	lk_to_bc(lk_model, skins, &bc_model);
-	printf("Conversion complete.\n\n");
+	printf("Conversion complete.\n");
 
 	//Printing
 	if (show_anims > 0) {
@@ -222,14 +223,6 @@ int main(int argc, char *argv[]) {
 	}
 	write_model(bc_m2_file, &bc_model);
 	printf("Model successfully written.\n");
-
-	//Closing files
-	printf("\n");
-	printf("Closing streams...\n");
-	for (i = 0; i < lk_model.header.nViews; i++) {
-		fclose(skin_files[i]);
-	}
-	fclose(lk_m2_file);
 	fclose(bc_m2_file);
 	return EXIT_SUCCESS;
 }
