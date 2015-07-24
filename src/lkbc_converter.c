@@ -63,11 +63,11 @@ void show_help() {
 	fprintf(stderr,
 			"Usage : lkbc_converter [OPTIONS] <model name> <target name>\n");
 	fprintf(stderr, " -t\tShow the textures your model need to work.\n");
-	fprintf(stderr, " Options for developers :\n");
-	fprintf(stderr, " -a\tShow animations data.\n");
-	fprintf(stderr, " -b\tShow bones data.\n");
 	fprintf(stderr,
 			" -c\tSet the converter target to Classic instead of The Burning Crusade.\n");
+	fprintf(stderr, " Developer options :\n");
+	fprintf(stderr, " -a\tShow animations data.\n");
+	fprintf(stderr, " -b\tShow bones data.\n");
 }
 /**
  * Main function
