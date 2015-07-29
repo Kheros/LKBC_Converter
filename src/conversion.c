@@ -1211,6 +1211,33 @@ int transparency_converter(BCM2 *ptr, LKM2 lk_m2) {
 }
 
 /**
+ * Filter submeshes in LKM2 structure to remove post-BC 3D parts
+ * @param ptr
+ */
+LKSubmesh *submeshes_filter(Skin skin) {
+	int final_number = skin.header.nSubmeshes;
+	int j;
+	for (j = 0; j < skin.header.nSubmeshes; j++) {
+		if (skin.Submeshes[j].ID == 0x1703) {	//TODO if it's a too recent submesh ID
+			final_number--;
+		}
+	}
+	if (final_number > 0) {
+		LKSubmesh *final_submeshes = malloc(final_number * sizeof(LKSubmesh));
+		int k = 0;
+		for (j = 0; j < skin.header.nSubmeshes; j++) {
+			if (skin.Submeshes[j].ID != 0x1703) {
+				final_submeshes[k] = skin.Submeshes[j];
+				k++;
+			}
+		}
+		return final_submeshes;
+	} else {
+		return skin.Submeshes;
+	}
+}
+
+/**
  * Convert skins to views
  * @param ptr
  * @param skins
