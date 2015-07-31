@@ -430,11 +430,9 @@ int read_attachments(FILE *lk_m2_file, LKM2 *ptr, FILE **anim_files) {
 
 int read_lights(FILE *lk_m2_file, LKM2 *ptr, FILE **anim_files) {
 	if (ptr->header.nLights > 0) {
-		ptr->lights = malloc(
-				ptr->header.nLights * sizeof(LKLight));
+		ptr->lights = malloc(ptr->header.nLights * sizeof(LKLight));
 		fseek(lk_m2_file, ptr->header.ofsLights, SEEK_SET);
-		fread(ptr->lights, sizeof(LKLight), ptr->header.nLights,
-				lk_m2_file);
+		fread(ptr->lights, sizeof(LKLight), ptr->header.nLights, lk_m2_file);
 
 		ptr->lightsanimofs = malloc(
 				ptr->header.nLights * sizeof(LightsRefBlock));//1 LKRefBlock per bone
@@ -444,34 +442,36 @@ int read_lights(FILE *lk_m2_file, LKM2 *ptr, FILE **anim_files) {
 		for (i = 0; i < ptr->header.nLights; i++) {
 			//A_color
 			read_Vec3DAnimBlock(lk_m2_file, &ptr->lights[i].a_color,
-					&ptr->lightsanimofs[i].a_color,
-					&ptr->lightsdata[i].a_color, ptr->animations, anim_files);
+					&ptr->lightsanimofs[i].a_color, &ptr->lightsdata[i].a_color,
+					ptr->animations, anim_files);
 			//A_intensity
 			read_FloatAnimBlock(lk_m2_file, &ptr->lights[i].a_intensity,
 					&ptr->lightsanimofs[i].a_intensity,
-					&ptr->lightsdata[i].a_intensity, ptr->animations, anim_files);
+					&ptr->lightsdata[i].a_intensity, ptr->animations,
+					anim_files);
 			//D_color
 			read_Vec3DAnimBlock(lk_m2_file, &ptr->lights[i].d_color,
-					&ptr->lightsanimofs[i].d_color,
-					&ptr->lightsdata[i].d_color, ptr->animations, anim_files);
+					&ptr->lightsanimofs[i].d_color, &ptr->lightsdata[i].d_color,
+					ptr->animations, anim_files);
 			//D_intensity
 			read_FloatAnimBlock(lk_m2_file, &ptr->lights[i].d_intensity,
 					&ptr->lightsanimofs[i].d_intensity,
-					&ptr->lightsdata[i].d_intensity, ptr->animations, anim_files);
+					&ptr->lightsdata[i].d_intensity, ptr->animations,
+					anim_files);
 
 			//A_start
 			read_FloatAnimBlock(lk_m2_file, &ptr->lights[i].a_start,
-					&ptr->lightsanimofs[i].a_start,
-					&ptr->lightsdata[i].a_start, ptr->animations, anim_files);
+					&ptr->lightsanimofs[i].a_start, &ptr->lightsdata[i].a_start,
+					ptr->animations, anim_files);
 			//A_end
 			read_FloatAnimBlock(lk_m2_file, &ptr->lights[i].a_end,
-					&ptr->lightsanimofs[i].a_end,
-					&ptr->lightsdata[i].a_end, ptr->animations, anim_files);
+					&ptr->lightsanimofs[i].a_end, &ptr->lightsdata[i].a_end,
+					ptr->animations, anim_files);
 
 			//Unknown
 			read_IntAnimBlock(lk_m2_file, &ptr->lights[i].unknown,
-					&ptr->lightsanimofs[i].unknown,
-					&ptr->lightsdata[i].unknown, ptr->animations, anim_files);
+					&ptr->lightsanimofs[i].unknown, &ptr->lightsdata[i].unknown,
+					ptr->animations, anim_files);
 		}
 		return 0;
 	}
@@ -593,7 +593,8 @@ int read_transparency(FILE *lk_m2_file, LKM2 *ptr, FILE **anim_files) {
  */
 int read_texanims(FILE *lk_m2_file, LKM2 *ptr, FILE **anim_files) {
 	if (ptr->header.nTexAnims > 0) {
-		ptr->texanims = malloc(ptr->header.nTexAnims * sizeof(LKTextureAnimation));
+		ptr->texanims = malloc(
+				ptr->header.nTexAnims * sizeof(LKTextureAnimation));
 		fseek(lk_m2_file, ptr->header.ofsTexAnims, SEEK_SET);
 		fread(ptr->texanims, sizeof(LKTextureAnimation), ptr->header.nTexAnims,
 				lk_m2_file);
@@ -632,98 +633,98 @@ int read_model_bc(FILE *bc_m2_file, BCM2 *ptr) {
 	fread(&ptr->header, sizeof(ModelHeader), 1, bc_m2_file);
 
 	/*
-	//Animations
-	ptr->animations = malloc(ptr->header.nAnimations * sizeof(ModelAnimation));
-	fseek(bc_m2_file, ptr->header.ofsAnimations, SEEK_SET);
-	fread(ptr->animations, sizeof(ModelAnimation), ptr->header.nAnimations,
-			bc_m2_file);
+	 //Animations
+	 ptr->animations = malloc(ptr->header.nAnimations * sizeof(ModelAnimation));
+	 fseek(bc_m2_file, ptr->header.ofsAnimations, SEEK_SET);
+	 fread(ptr->animations, sizeof(ModelAnimation), ptr->header.nAnimations,
+	 bc_m2_file);
 
-	//Bones
-	if (ptr->header.nBones > 0) { //I think lights and other non-geometric things don't have any
-		ptr->bones = malloc(ptr->header.nBones * sizeof(ModelBoneDef));
-		ptr->bonesdata = malloc(ptr->header.nBones * sizeof(BonesDataBlock));
-		fseek(bc_m2_file, ptr->header.ofsBones, SEEK_SET);
-		fread(ptr->bones, sizeof(ModelBoneDef), ptr->header.nBones, bc_m2_file);
-		int i;
-		for (i = 0; i < ptr->header.nBones; i++) {
-			//Translation
-			if (ptr->bones[i].trans.Ranges.n > 0) {
-				ptr->bonesdata[i].trans.ranges = malloc(
-						ptr->bones[i].trans.Ranges.n * sizeof(Range));
-				fseek(bc_m2_file, ptr->bones[i].trans.Ranges.ofs,
-				SEEK_SET);
-				fread(ptr->bonesdata[i].trans.ranges, sizeof(Range),
-						ptr->bones[i].trans.Ranges.n, bc_m2_file);
-			}
-			if (ptr->bones[i].trans.Times.n > 0) {
-				ptr->bonesdata[i].trans.times = malloc(
-						ptr->bones[i].trans.Times.n * sizeof(uint32));
-				fseek(bc_m2_file, ptr->bones[i].trans.Times.ofs,
-				SEEK_SET);
-				fread(ptr->bonesdata[i].trans.times, sizeof(uint32),
-						ptr->bones[i].trans.Times.n, bc_m2_file);
-			}
-			if (ptr->bones[i].trans.Keys.n > 0) {
-				ptr->bonesdata[i].trans.keys = malloc(
-						ptr->bones[i].trans.Keys.n * sizeof(Vec3D));
-				fseek(bc_m2_file, ptr->bones[i].trans.Keys.ofs,
-				SEEK_SET);
-				fread(ptr->bonesdata[i].trans.keys, sizeof(Vec3D),
-						ptr->bones[i].trans.Keys.n, bc_m2_file);
-			}
-			//Rotation
-			if (ptr->bones[i].rot.Ranges.n > 0) {
-				ptr->bonesdata[i].rot.ranges = malloc(
-						ptr->bones[i].rot.Ranges.n * sizeof(Range));
-				fseek(bc_m2_file, ptr->bones[i].rot.Ranges.ofs,
-				SEEK_SET);
-				fread(ptr->bonesdata[i].rot.ranges, sizeof(Range),
-						ptr->bones[i].rot.Ranges.n, bc_m2_file);
-			}
-			if (ptr->bones[i].rot.Times.n > 0) {
-				ptr->bonesdata[i].rot.times = malloc(
-						ptr->bones[i].rot.Times.n * sizeof(uint32));
-				fseek(bc_m2_file, ptr->bones[i].rot.Times.ofs,
-				SEEK_SET);
-				fread(ptr->bonesdata[i].rot.times, sizeof(uint32),
-						ptr->bones[i].rot.Times.n, bc_m2_file);
-			}
-			if (ptr->bones[i].rot.Keys.n > 0) {
-				ptr->bonesdata[i].rot.keys = malloc(
-						ptr->bones[i].rot.Keys.n * sizeof(Quat));
-				fseek(bc_m2_file, ptr->bones[i].rot.Keys.ofs,
-				SEEK_SET);
-				fread(ptr->bonesdata[i].rot.keys, sizeof(Quat),
-						ptr->bones[i].rot.Keys.n, bc_m2_file);
-			}
-			//Scaling
-			if (ptr->bones[i].scal.Ranges.n > 0) {
-				ptr->bonesdata[i].scal.ranges = malloc(
-						ptr->bones[i].scal.Ranges.n * sizeof(Range));
-				fseek(bc_m2_file, ptr->bones[i].scal.Ranges.ofs,
-				SEEK_SET);
-				fread(ptr->bonesdata[i].scal.ranges, sizeof(Range),
-						ptr->bones[i].scal.Ranges.n, bc_m2_file);
-			}
-			if (ptr->bones[i].scal.Times.n > 0) {
-				ptr->bonesdata[i].scal.times = malloc(
-						ptr->bones[i].scal.Times.n * sizeof(uint32));
-				fseek(bc_m2_file, ptr->bones[i].scal.Times.ofs,
-				SEEK_SET);
-				fread(ptr->bonesdata[i].scal.times, sizeof(uint32),
-						ptr->bones[i].scal.Times.n, bc_m2_file);
-			}
-			if (ptr->bones[i].scal.Keys.n > 0) {
-				ptr->bonesdata[i].scal.keys = malloc(
-						ptr->bones[i].scal.Keys.n * sizeof(Vec3D));
-				fseek(bc_m2_file, ptr->bones[i].scal.Keys.ofs,
-				SEEK_SET);
-				fread(ptr->bonesdata[i].scal.keys, sizeof(Vec3D),
-						ptr->bones[i].scal.Keys.n, bc_m2_file);
-			}
-		}
-	}
-	*/
+	 //Bones
+	 if (ptr->header.nBones > 0) { //I think lights and other non-geometric things don't have any
+	 ptr->bones = malloc(ptr->header.nBones * sizeof(ModelBoneDef));
+	 ptr->bonesdata = malloc(ptr->header.nBones * sizeof(BonesDataBlock));
+	 fseek(bc_m2_file, ptr->header.ofsBones, SEEK_SET);
+	 fread(ptr->bones, sizeof(ModelBoneDef), ptr->header.nBones, bc_m2_file);
+	 int i;
+	 for (i = 0; i < ptr->header.nBones; i++) {
+	 //Translation
+	 if (ptr->bones[i].trans.Ranges.n > 0) {
+	 ptr->bonesdata[i].trans.ranges = malloc(
+	 ptr->bones[i].trans.Ranges.n * sizeof(Range));
+	 fseek(bc_m2_file, ptr->bones[i].trans.Ranges.ofs,
+	 SEEK_SET);
+	 fread(ptr->bonesdata[i].trans.ranges, sizeof(Range),
+	 ptr->bones[i].trans.Ranges.n, bc_m2_file);
+	 }
+	 if (ptr->bones[i].trans.Times.n > 0) {
+	 ptr->bonesdata[i].trans.times = malloc(
+	 ptr->bones[i].trans.Times.n * sizeof(uint32));
+	 fseek(bc_m2_file, ptr->bones[i].trans.Times.ofs,
+	 SEEK_SET);
+	 fread(ptr->bonesdata[i].trans.times, sizeof(uint32),
+	 ptr->bones[i].trans.Times.n, bc_m2_file);
+	 }
+	 if (ptr->bones[i].trans.Keys.n > 0) {
+	 ptr->bonesdata[i].trans.keys = malloc(
+	 ptr->bones[i].trans.Keys.n * sizeof(Vec3D));
+	 fseek(bc_m2_file, ptr->bones[i].trans.Keys.ofs,
+	 SEEK_SET);
+	 fread(ptr->bonesdata[i].trans.keys, sizeof(Vec3D),
+	 ptr->bones[i].trans.Keys.n, bc_m2_file);
+	 }
+	 //Rotation
+	 if (ptr->bones[i].rot.Ranges.n > 0) {
+	 ptr->bonesdata[i].rot.ranges = malloc(
+	 ptr->bones[i].rot.Ranges.n * sizeof(Range));
+	 fseek(bc_m2_file, ptr->bones[i].rot.Ranges.ofs,
+	 SEEK_SET);
+	 fread(ptr->bonesdata[i].rot.ranges, sizeof(Range),
+	 ptr->bones[i].rot.Ranges.n, bc_m2_file);
+	 }
+	 if (ptr->bones[i].rot.Times.n > 0) {
+	 ptr->bonesdata[i].rot.times = malloc(
+	 ptr->bones[i].rot.Times.n * sizeof(uint32));
+	 fseek(bc_m2_file, ptr->bones[i].rot.Times.ofs,
+	 SEEK_SET);
+	 fread(ptr->bonesdata[i].rot.times, sizeof(uint32),
+	 ptr->bones[i].rot.Times.n, bc_m2_file);
+	 }
+	 if (ptr->bones[i].rot.Keys.n > 0) {
+	 ptr->bonesdata[i].rot.keys = malloc(
+	 ptr->bones[i].rot.Keys.n * sizeof(Quat));
+	 fseek(bc_m2_file, ptr->bones[i].rot.Keys.ofs,
+	 SEEK_SET);
+	 fread(ptr->bonesdata[i].rot.keys, sizeof(Quat),
+	 ptr->bones[i].rot.Keys.n, bc_m2_file);
+	 }
+	 //Scaling
+	 if (ptr->bones[i].scal.Ranges.n > 0) {
+	 ptr->bonesdata[i].scal.ranges = malloc(
+	 ptr->bones[i].scal.Ranges.n * sizeof(Range));
+	 fseek(bc_m2_file, ptr->bones[i].scal.Ranges.ofs,
+	 SEEK_SET);
+	 fread(ptr->bonesdata[i].scal.ranges, sizeof(Range),
+	 ptr->bones[i].scal.Ranges.n, bc_m2_file);
+	 }
+	 if (ptr->bones[i].scal.Times.n > 0) {
+	 ptr->bonesdata[i].scal.times = malloc(
+	 ptr->bones[i].scal.Times.n * sizeof(uint32));
+	 fseek(bc_m2_file, ptr->bones[i].scal.Times.ofs,
+	 SEEK_SET);
+	 fread(ptr->bonesdata[i].scal.times, sizeof(uint32),
+	 ptr->bones[i].scal.Times.n, bc_m2_file);
+	 }
+	 if (ptr->bones[i].scal.Keys.n > 0) {
+	 ptr->bonesdata[i].scal.keys = malloc(
+	 ptr->bones[i].scal.Keys.n * sizeof(Vec3D));
+	 fseek(bc_m2_file, ptr->bones[i].scal.Keys.ofs,
+	 SEEK_SET);
+	 fread(ptr->bonesdata[i].scal.keys, sizeof(Vec3D),
+	 ptr->bones[i].scal.Keys.n, bc_m2_file);
+	 }
+	 }
+	 }
+	 */
 	//Events
 	if (ptr->header.nEvents > 0) { //I think lights and other non-geometric things don't have any
 		ptr->events = malloc(ptr->header.nEvents * sizeof(Event));
@@ -754,10 +755,13 @@ int read_model_bc(FILE *bc_m2_file, BCM2 *ptr) {
 
 	//Attachments
 	if (ptr->header.nAttachments > 0) { //I think lights and other non-geometric things don't have any
-		ptr->attachments = malloc(ptr->header.nAttachments * sizeof(Attachment));
-		ptr->attachmentsdata = malloc(ptr->header.nAttachments * sizeof(AttachmentsDataBlock));
+		ptr->attachments = malloc(
+				ptr->header.nAttachments * sizeof(Attachment));
+		ptr->attachmentsdata = malloc(
+				ptr->header.nAttachments * sizeof(AttachmentsDataBlock));
 		fseek(bc_m2_file, ptr->header.ofsAttachments, SEEK_SET);
-		fread(ptr->attachments, sizeof(Attachment), ptr->header.nAttachments, bc_m2_file);
+		fread(ptr->attachments, sizeof(Attachment), ptr->header.nAttachments,
+				bc_m2_file);
 		int i;
 		for (i = 0; i < ptr->header.nAttachments; i++) {
 			//Data
@@ -806,7 +810,7 @@ int read_model(FILE *lk_m2_file, LKM2 *ptr) {
 	real_id[2] = ptr->header.id[2];
 	real_id[3] = ptr->header.id[3];
 	real_id[4] = '\0';
-	if(strcmp("MD20", real_id)){
+	if (strcmp("MD20", real_id)) {
 		fprintf(stderr, "This is not an M2 file.\n");
 		exit(EXIT_FAILURE);
 	}
@@ -836,7 +840,6 @@ int read_model(FILE *lk_m2_file, LKM2 *ptr) {
 	fseek(lk_m2_file, ptr->header.ofsAnimations, SEEK_SET);
 	fread(ptr->animations, sizeof(LKModelAnimation), ptr->header.nAnimations,
 			lk_m2_file);
-
 
 	//Animation Files
 	FILE **anim_files;

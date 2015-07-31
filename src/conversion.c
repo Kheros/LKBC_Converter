@@ -1210,30 +1210,38 @@ int transparency_converter(BCM2 *ptr, LKM2 lk_m2) {
 	return 0;
 }
 
+int isBadMesh(short ID){
+	if(ID == 1703 || ID == 1802 || ID == 1803 || ID == 2001){
+		return 1;
+	}
+	return 0;
+}
 /**
  * Filter submeshes in LKM2 structure to remove post-BC 3D parts
  * @param ptr
  */
-LKSubmesh *submeshes_filter(Skin skin) {
-	int final_number = skin.header.nSubmeshes;
+void submeshes_filter(Skin *ptr) {
+	int final_number = (*ptr).header.nSubmeshes;
 	int j;
-	for (j = 0; j < skin.header.nSubmeshes; j++) {
-		if (skin.Submeshes[j].ID == 0x1703) {	//TODO if it's a too recent submesh ID
+	for (j = 0; j < (*ptr).header.nSubmeshes; j++) {
+		if (isBadMesh((*ptr).Submeshes[j].ID)) {//TODO if it's a too recent submesh ID
 			final_number--;
 		}
 	}
-	if (final_number > 0) {
+	if (final_number <= 0) {
+		fprintf(stderr, "Fatal error in the Submeshes filter\n");
+		exit(EXIT_FAILURE);
+	} else if (final_number != (*ptr).header.nSubmeshes) {
 		LKSubmesh *final_submeshes = malloc(final_number * sizeof(LKSubmesh));
 		int k = 0;
-		for (j = 0; j < skin.header.nSubmeshes; j++) {
-			if (skin.Submeshes[j].ID != 0x1703) {
-				final_submeshes[k] = skin.Submeshes[j];
+		for (j = 0; j < (*ptr).header.nSubmeshes; j++) {
+			if (!isBadMesh((*ptr).Submeshes[j].ID)) {
+				final_submeshes[k] = (*ptr).Submeshes[j];
 				k++;
 			}
 		}
-		return final_submeshes;
-	} else {
-		return skin.Submeshes;
+		(*ptr).header.nSubmeshes = final_number;
+		(*ptr).Submeshes = final_submeshes;
 	}
 }
 
@@ -1529,6 +1537,10 @@ int lk_to_bc(LKM2 lk_m2, Skin *skins, BCM2 *ptr) {
 	}
 
 	//Views
+	for (i = 0; i < lk_m2.header.nViews; i++) {
+		submeshes_filter(&skins[i]);
+	}
+
 	views_converter(ptr, skins);
 	views_filler(ptr);
 

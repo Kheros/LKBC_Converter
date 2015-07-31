@@ -186,7 +186,6 @@ int main(int argc, char *argv[]) {
 	if (show_textures > 0) {
 		print_texnames_bc(bc_model);
 	}
-	//print_attachments_bc(bc_model);
 
 	//Reads the genuine TBC file. Useful to compare the models.
 	/*
