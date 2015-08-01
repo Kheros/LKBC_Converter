@@ -25,7 +25,7 @@ typedef Vec3D BigFloat[3];
 typedef struct PlayAnimRecord {
 	int16 ID;
 	int16 flags;
-}PlayAnimRecord;
+} PlayAnimRecord;
 typedef struct ArrayRef { //Can point to absolutely anything
 	uint32 n;
 	uint32 ofs;
@@ -207,7 +207,7 @@ typedef struct LKModelAnimation {
 	Vec3D boxB;				//MaximumExtent
 	float rad;				//BoundsRadius
 	int16 NextAnimation;
-	uint16 Index;//aliasNext
+	uint16 Index;				//aliasNext
 } LKModelAnimation;
 
 typedef struct ModelAnimation {
@@ -249,81 +249,100 @@ typedef struct AnimationBlock {
 	ArrayRef Keys;  //links to i elements
 } AnimationBlock;
 
+typedef struct FakeAnimBlock {
+	ArrayRef Times;  //links to i short (!)
+	ArrayRef Keys;  //links to i elements
+} FakeAnimBlock;
+
 //SubBlocks
-typedef struct Vec3D_LKSubBlock{
+typedef struct Vec3D_LKSubBlock {
 	uint32 *times;
 	Vec3D *keys;
-}Vec3D_LKSubBlock;
-typedef struct Vec3D_SubBlock{
+} Vec3D_LKSubBlock;
+typedef struct Vec3D_SubBlock {
 	Range *ranges;
 	uint32 *times;
 	Vec3D *keys;
-}Vec3D_SubBlock;
+} Vec3D_SubBlock;
 
-typedef struct Quat_LKSubBlock{
+typedef struct Quat_LKSubBlock {
 	uint32 *times;
 	Quat *keys;
-}Quat_LKSubBlock;
-typedef struct Quat_SubBlock{
+} Quat_LKSubBlock;
+typedef struct Quat_SubBlock {
 	Range *ranges;
 	uint32 *times;
 	Quat *keys;
-}Quat_SubBlock;
+} Quat_SubBlock;
 
-typedef struct Short_LKSubBlock{
+typedef struct Short_LKSubBlock {
 	uint32 *times;
 	short *keys;
-}Short_LKSubBlock;
-typedef struct Short_SubBlock{
+} Short_LKSubBlock;
+typedef struct Short_SubBlock {
 	Range *ranges;
 	uint32 *times;
 	short *keys;
-}Short_SubBlock;
+} Short_SubBlock;
 
-typedef struct Char_LKSubBlock{
+typedef struct Char_LKSubBlock {
 	uint32 *times;
 	char *keys;
-}Char_LKSubBlock;
-typedef struct Char_SubBlock{
+} Char_LKSubBlock;
+typedef struct Char_SubBlock {
 	Range *ranges;
 	uint32 *times;
 	char *keys;
-}Char_SubBlock;
+} Char_SubBlock;
 
-typedef struct Int_LKSubBlock{
+typedef struct Int_LKSubBlock {
 	uint32 *times;
 	int *keys;
-}Int_LKSubBlock;
-typedef struct Int_SubBlock{
+} Int_LKSubBlock;
+typedef struct Int_SubBlock {
 	Range *ranges;
 	uint32 *times;
 	int *keys;
-}Int_SubBlock;
+} Int_SubBlock;
 
-typedef struct BigFloat_LKSubBlock{
+typedef struct BigFloat_LKSubBlock {
 	uint32 *times;
 	BigFloat *keys;
-}BigFloat_LKSubBlock;
-typedef struct BigFloat_SubBlock{
+} BigFloat_LKSubBlock;
+typedef struct BigFloat_SubBlock {
 	Range *ranges;
 	uint32 *times;
 	BigFloat *keys;
-}BigFloat_SubBlock;
+} BigFloat_SubBlock;
 
-typedef struct Float_LKSubBlock{
+typedef struct Float_LKSubBlock {
 	uint32 *times;
 	float *keys;
-}Float_LKSubBlock;
-typedef struct Float_SubBlock{
+} Float_LKSubBlock;
+typedef struct Float_SubBlock {
 	Range *ranges;
 	uint32 *times;
 	float *keys;
-}Float_SubBlock;
+} Float_SubBlock;
 
-typedef struct AnimRefs{
+typedef struct AnimRefs {
 	ArrayRef *times;
 	ArrayRef *keys;
-}AnimRefs;
+} AnimRefs;
+
+//SubBlocks for FakeAnimBlocks
+typedef struct Vec3D_FSubBlock {
+	short *times;
+	Vec3D *keys;
+} Vec3D_FSubBlock;
+typedef struct Vec2D_FSubBlock {
+	short *times;
+	Vec2D *keys;
+} Vec2D_FSubBlock;
+typedef struct Short_FSubBlock {
+	short *times;
+	short *keys;
+} Short_FSubBlock;
 
 typedef struct ModelVertex {
 	Vec3D pos;
@@ -336,10 +355,10 @@ typedef struct ModelVertex {
 
 //Bones
 typedef struct LKModelBoneDef {
-	int32 animid;//KeyBoneID
+	int32 animid;  //KeyBoneID
 	uint32 flags;
 	int16 parent;
-	uint16 geoid;//SubmeshID
+	uint16 geoid;  //SubmeshID
 	int32 unk;
 
 	//Offsets link to a new nX ofsX
@@ -481,9 +500,9 @@ typedef struct LKTransparency {
 typedef struct Transparency {
 	AnimationBlock alpha;
 } Transparency;
-typedef struct TransparencyRefBlock{
+typedef struct TransparencyRefBlock {
 	AnimRefs alpha;
-}TransparencyRefBlock;
+} TransparencyRefBlock;
 typedef struct LKTransparencyDataBlock {
 	Short_LKSubBlock *alpha;
 } LKTransparencyDataBlock;
@@ -496,11 +515,11 @@ typedef struct LKLight {
 	uint16 ID;
 	uint16 bone;
 	Vec3D position;
-	LKAnimationBlock a_color;//Ambient
+	LKAnimationBlock a_color;  //Ambient
 	LKAnimationBlock a_intensity;
-	LKAnimationBlock d_color;//Diffuse
+	LKAnimationBlock d_color;  //Diffuse
 	LKAnimationBlock d_intensity;
-	LKAnimationBlock a_start;//Attenuation
+	LKAnimationBlock a_start;  //Attenuation
 	LKAnimationBlock a_end;
 	LKAnimationBlock unknown;
 } LKLight;
@@ -508,42 +527,142 @@ typedef struct Light {
 	uint16 ID;
 	uint16 bone;
 	Vec3D position;
-	AnimationBlock a_color;//Ambient
+	AnimationBlock a_color;  //Ambient
 	AnimationBlock a_intensity;
-	AnimationBlock d_color;//Diffuse
+	AnimationBlock d_color;  //Diffuse
 	AnimationBlock d_intensity;
-	AnimationBlock a_start;//Attenuation
+	AnimationBlock a_start;  //Attenuation
 	AnimationBlock a_end;
 	AnimationBlock unknown;
 } Light;
-typedef struct LightsRefBlock{
-	AnimRefs a_color;//Ambient
+typedef struct LightsRefBlock {
+	AnimRefs a_color;  //Ambient
 	AnimRefs a_intensity;
-	AnimRefs d_color;//Diffuse
+	AnimRefs d_color;  //Diffuse
 	AnimRefs d_intensity;
-	AnimRefs a_start;//Attenuation
+	AnimRefs a_start;  //Attenuation
 	AnimRefs a_end;
 	AnimRefs unknown;
-}LightsRefBlock;
+} LightsRefBlock;
 typedef struct LKLightsDataBlock {
-	Vec3D_LKSubBlock *a_color;//Ambient
+	Vec3D_LKSubBlock *a_color;  //Ambient
 	Float_LKSubBlock *a_intensity;
-	Vec3D_LKSubBlock *d_color;//Diffuse
+	Vec3D_LKSubBlock *d_color;  //Diffuse
 	Float_LKSubBlock *d_intensity;
-	Float_LKSubBlock *a_start;//Attenuation
+	Float_LKSubBlock *a_start;  //Attenuation
 	Float_LKSubBlock *a_end;
 	Int_LKSubBlock *unknown;
 } LKLightsDataBlock;
 typedef struct LightsDataBlock {
-	Vec3D_SubBlock a_color;//Ambient
+	Vec3D_SubBlock a_color;  //Ambient
 	Float_SubBlock a_intensity;
-	Vec3D_SubBlock d_color;//Diffuse
+	Vec3D_SubBlock d_color;  //Diffuse
 	Float_SubBlock d_intensity;
-	Float_SubBlock a_start;//Attenuation
+	Float_SubBlock a_start;  //Attenuation
 	Float_SubBlock a_end;
 	Int_SubBlock unknown;
 } LightsDataBlock;
 
+struct LKParticle {
+	uint32 unknown;
+	uint32 flags;
+	Vec3D pos;
+	uint16 bone;
+	uint16 texture;
+	uint32 lenModelFilename;
+	uint32 ofsModelFilename;
+	uint32 lenParticleFilename;
+	uint32 ofsParticleFilename;
+	char BlendingType;
+	char EmitterType;
+	short ParticleColorIndex;
+	char ParticleType;
+	char HeadorTail;
+	short TextureTileRotation;
+	short TextureRows;
+	short TextureCols;
+	struct LKAnimationBlock emissionspeed;
+	struct LKAnimationBlock speedvariation;
+	struct LKAnimationBlock verticalrange;
+	struct LKAnimationBlock horizontalrange;
+	struct LKAnimationBlock gravity;
+	struct LKAnimationBlock lifespan;
+	int unknown1;
+	struct LKAnimationBlock emissionrate;
+	int unknown2;
+	struct LKAnimationBlock emissionarealength;
+	struct LKAnimationBlock emissionareawidth;
+	struct LKAnimationBlock gravity2;
+	struct FakeAnimBlock color;
+	struct FakeAnimBlock opacity;
+	struct FakeAnimBlock size;
+	int unknownfields[2];
+	struct FakeAnimBlock intensity;
+	struct FakeAnimBlock unknownblock;
+	Vec3D unk;
+	Vec3D scales;
+	float slowdown;
+	Vec2D unknown3;
+	float rotation;
+	Vec2D unknown4;
+	Vec3D Rot1;
+	Vec3D Rot2;
+	Vec3D Trans;
+	float f2[4];
+	int nUnknownReference;
+	int ofsUnknownReference;
+	struct LKAnimationBlock enabled;
+} LKParticle;
+struct Particle {
+	uint32 unknown;
+	uint32 flags;
+	Vec3D pos;
+	uint16 bone;
+	uint16 texture;
+	uint32 lenModelFilename;
+	uint32 ofsModelFilename;
+	uint32 lenParticleFilename;
+	uint32 ofsParticleFilename;
+	char BlendingType;
+	char EmitterType;
+	short ParticleColorIndex;
+	char ParticleType;
+	char HeadorTail;
+	short TextureTileRotation;
+	short TextureRows;
+	short TextureCols;
+	struct AnimationBlock emissionspeed;
+	struct AnimationBlock speedvariation;
+	struct AnimationBlock verticalrange;
+	struct AnimationBlock horizontalrange;
+	struct AnimationBlock gravity;
+	struct AnimationBlock lifespan;
+	int unknown1;
+	struct AnimationBlock emissionrate;
+	int unknown2;
+	struct AnimationBlock emissionarealength;
+	struct AnimationBlock emissionareawidth;
+	struct AnimationBlock gravity2;
+	struct FakeAnimBlock color;
+	struct FakeAnimBlock opacity;
+	struct FakeAnimBlock size;
+	int unknownfields[2];
+	struct FakeAnimBlock intensity;
+	struct FakeAnimBlock unknownblock;
+	Vec3D unk;
+	Vec3D scales;
+	float slowdown;
+	Vec2D unknown3;
+	float rotation;
+	Vec2D unknown4;
+	Vec3D Rot1;
+	Vec3D Rot2;
+	Vec3D Trans;
+	float f2[4];
+	int nUnknownReference;
+	int ofsUnknownReference;
+	struct AnimationBlock enabled;
+} Particle;
 
 typedef struct SkinHeader {
 	uint32 ID;
@@ -663,9 +782,9 @@ typedef struct View { //Only present in 2.x models. Replaced by Skin files in 3.
 } View;
 
 //Events
-typedef struct EventsRefBlock{
+typedef struct EventsRefBlock {
 	ArrayRef *times;
-}EventsRefBlock;
+} EventsRefBlock;
 typedef struct LKEventsDataBlock {
 	uint32 **times;
 } LKEventsDataBlock;
@@ -693,14 +812,14 @@ typedef struct LKEvent {
 	uint32 bone;
 	Vec3D position;
 	LKEventAnimBlock timer;
-}LKEvent;
+} LKEvent;
 typedef struct Event {
 	char ID[4];
 	uint32 data;
 	uint32 bone;
 	Vec3D position;
 	EventAnimBlock timer;
-}Event;
+} Event;
 
 //FILES
 
@@ -735,7 +854,6 @@ typedef struct LKM2 {
 	LKTextureAnimation *texanims;
 	RefBlock *texanimofs;
 	LKBonesDataBlock *texdata; //bones layer 2
-
 
 	short *TexReplace;
 	int *renderflags;

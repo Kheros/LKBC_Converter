@@ -1093,6 +1093,7 @@ int cameras_converter(BCM2 *ptr, LKM2 lk_m2) {
 }
 
 //Events
+/*
 #define EV_NUMBER 16
 char *bc_events[EV_NUMBER] = { 0 };
 int ev_init = 0;
@@ -1169,10 +1170,6 @@ void analyze_events(BCM2 model) {
 	}
 }
 
-/**
- * Filter events in LKM2 structure to remove events with post-BC identifiers
- * @param ptr
- */
 LKEvent *events_filter(LKM2 model) {
 	int final_number = model.header.nEvents;
 	int i;
@@ -1195,6 +1192,7 @@ LKEvent *events_filter(LKM2 model) {
 		return model.events;
 	}
 }
+*/
 
 int events_converter(BCM2 *ptr, LKM2 lk_m2) {
 	ptr->events = malloc(ptr->header.nEvents * sizeof(Event));
