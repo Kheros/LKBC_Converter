@@ -256,6 +256,45 @@ void read_ShortAnimBlock(FILE *lk_m2_file, LKAnimationBlock *ptrBlock,
 	}
 }
 
+void read_CharAnimBlock(FILE *lk_m2_file, LKAnimationBlock *ptrBlock,
+		AnimRefs *ptrAnimRefs, Char_LKSubBlock **ptrDataBlock,
+		LKModelAnimation *AnimList, FILE **anim_files) {
+	if (ptrBlock->Times.n > 0) {
+		//Layer 1
+		read_layer1(lk_m2_file, ptrBlock, ptrAnimRefs);
+		//Layer 2
+		(*ptrDataBlock) = malloc(ptrBlock->Times.n * sizeof(Char_LKSubBlock)); //Each Array_Ref leads to an array of elements (and there are Times.n of them, as seen previously)
+		int j;
+		for (j = 0; j < ptrBlock->Times.n; j++) {
+			int real_pos = get_RealPos(j, AnimList);
+			if ((AnimList[j].flags & 0x130) == 0) {	//Open .anim file
+				FILE *anim_file = anim_files[real_pos];
+				read_times(anim_file, ptrAnimRefs, &(*ptrDataBlock)[j].times, j,
+						real_pos);
+				if (ptrAnimRefs->keys[real_pos].n > 0) {
+					(*ptrDataBlock)[j].keys = malloc(
+							ptrAnimRefs->keys[real_pos].n * sizeof(char));
+					fseek(anim_file, ptrAnimRefs->keys[real_pos].ofs,
+					SEEK_SET);
+					fread((*ptrDataBlock)[j].keys, sizeof(char),
+							ptrAnimRefs->keys[real_pos].n, anim_file);
+				}
+			} else {
+				read_times(lk_m2_file, ptrAnimRefs, &(*ptrDataBlock)[j].times,
+						j, real_pos);
+				if (ptrAnimRefs->keys[real_pos].n > 0) {
+					(*ptrDataBlock)[j].keys = malloc(
+							ptrAnimRefs->keys[real_pos].n * sizeof(char));
+					fseek(lk_m2_file, ptrAnimRefs->keys[real_pos].ofs,
+					SEEK_SET);
+					fread((*ptrDataBlock)[j].keys, sizeof(char),
+							ptrAnimRefs->keys[real_pos].n, lk_m2_file);
+				}
+			}
+		}
+	}
+}
+
 void read_IntAnimBlock(FILE *lk_m2_file, LKAnimationBlock *ptrBlock,
 		AnimRefs *ptrAnimRefs, Int_LKSubBlock **ptrDataBlock,
 		LKModelAnimation *AnimList, FILE **anim_files) {
@@ -419,7 +458,7 @@ int read_attachments(FILE *lk_m2_file, LKM2 *ptr, FILE **anim_files) {
 		int i;
 		for (i = 0; i < ptr->header.nAttachments; i++) {
 			//Data
-			read_IntAnimBlock(lk_m2_file, &ptr->attachments[i].data,
+			read_CharAnimBlock(lk_m2_file, &ptr->attachments[i].data,
 					&ptr->attachmentsanimofs[i].data,
 					&ptr->attachmentsdata[i].data, ptr->animations, anim_files);
 		}

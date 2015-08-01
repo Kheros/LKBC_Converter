@@ -280,6 +280,16 @@ typedef struct Short_SubBlock{
 	short *keys;
 }Short_SubBlock;
 
+typedef struct Char_LKSubBlock{
+	uint32 *times;
+	char *keys;
+}Char_LKSubBlock;
+typedef struct Char_SubBlock{
+	Range *ranges;
+	uint32 *times;
+	char *keys;
+}Char_SubBlock;
+
 typedef struct Int_LKSubBlock{
 	uint32 *times;
 	int *keys;
@@ -397,10 +407,10 @@ typedef struct AttachmentsRefBlock {
 	AnimRefs data;
 } AttachmentsRefBlock;
 typedef struct LKAttachmentsDataBlock {
-	Int_LKSubBlock *data;
+	Char_LKSubBlock *data;
 } LKAttachmentsDataBlock;
 typedef struct AttachmentsDataBlock {
-	Int_SubBlock data;
+	Char_SubBlock data;
 } AttachmentsDataBlock;
 
 //Cameras

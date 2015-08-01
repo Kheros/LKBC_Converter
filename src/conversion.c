@@ -705,6 +705,78 @@ void convert_ShortAnimBlock(LKAnimationBlock LKBlock, AnimRefs AnimRefs,
 	}
 }
 
+void convert_CharAnimBlock(LKAnimationBlock LKBlock, AnimRefs AnimRefs,
+		Char_LKSubBlock *LKDataBlock, AnimationBlock *ptrBlock,
+		Char_SubBlock *ptrDataBlock, ModelAnimation *animations,
+		int nAnimations) {
+	ptrBlock->Ranges.ofs = 0;
+	ptrBlock->Times.ofs = 0;
+	ptrBlock->Keys.ofs = 0;
+	ptrBlock->Ranges.n = 0;
+	ptrBlock->Times.n = 0;
+	ptrBlock->Keys.n = 0;
+	if (LKBlock.Times.n > 1) {
+		//Interpolation ranges
+		ptrBlock->Ranges.n = nAnimations + 1;
+		ptrDataBlock->ranges = malloc(ptrBlock->Ranges.n * sizeof(Range));
+		ptrDataBlock->ranges[nAnimations][0] = 0; //No idea why the last (int,int) is always 0
+		ptrDataBlock->ranges[nAnimations][1] = 0;
+		compute_ranges(LKBlock.Times.n, AnimRefs.times, &ptrDataBlock->ranges);
+
+		size_t keyframes_size = get_keyframes_number(LKBlock.Times.n,
+				AnimRefs.times); //Number of (Timestamp, key) tuples
+		ptrBlock->Times.n = keyframes_size;
+		ptrBlock->Keys.n = keyframes_size;
+		ptrDataBlock->times = malloc((keyframes_size) * sizeof(uint32));
+		ptrDataBlock->keys = malloc((keyframes_size) * sizeof(char));
+
+		int keyframes_index = 0; //Not reset when we finish the extraction of keys from 1 animation
+		int j;
+		for (j = 0; j < LKBlock.Times.n; j++) {
+			//Keyframes
+			if (AnimRefs.times[j].n > 1) { //scal.times[j].n = s_keys[j].n (everything is symmetric since it's a keyframe tuple)
+				int k;
+				for (k = 0; k < AnimRefs.times[j].n; k++) {	//Take each value for this anim and put it in the BC data
+					//TIMESTAMP
+					ptrDataBlock->times[keyframes_index] =
+							animations[j].timeStart + LKDataBlock[j].times[k]; //Start Time + animation-relative time
+					//KEY
+					ptrDataBlock->keys[keyframes_index] =
+							LKDataBlock[j].keys[k];
+					keyframes_index++;
+				}
+			} else if (AnimRefs.times[j].n == 1) {
+				//TIMESTAMP
+				ptrDataBlock->times[keyframes_index] = animations[j].timeStart;
+				ptrDataBlock->times[keyframes_index + 1] =
+						animations[j].timeEnd;
+				//KEY
+				ptrDataBlock->keys[keyframes_index] = LKDataBlock[j].keys[0];
+				ptrDataBlock->keys[keyframes_index + 1] =
+						LKDataBlock[j].keys[0];
+				keyframes_index += 2;
+			} else {						//n=0
+				//TIMESTAMP
+				ptrDataBlock->times[keyframes_index] = animations[j].timeStart;
+				ptrDataBlock->times[keyframes_index + 1] =
+						animations[j].timeEnd;
+				//KEY
+				ptrDataBlock->keys[keyframes_index] = 0;
+				ptrDataBlock->keys[keyframes_index + 1] = 0;
+				keyframes_index += 2;
+			}
+		}
+	} else if (LKBlock.Times.n == 1) { //Constant value across all animations for the bone
+		ptrBlock->Ranges.n = 0;
+		ptrBlock->Times.n = 1;
+		ptrBlock->Keys.n = 1;
+		ptrDataBlock->times = malloc(sizeof(uint32));
+		ptrDataBlock->keys = malloc(sizeof(char));
+		ptrDataBlock->times[0] = LKDataBlock[0].times[0];
+		ptrDataBlock->keys[0] = LKDataBlock[0].keys[0];
+	}
+}
+
 void convert_EventAnimBlock(LKEventAnimBlock LKBlock, ArrayRef *ArrayRefs,
 		LKEventsDataBlock LKDataBlock, EventAnimBlock *ptrBlock,
 		EventsDataBlock *ptrDataBlock, ModelAnimation *animations,
@@ -852,7 +924,7 @@ int attachments_converter(BCM2 *ptr, LKM2 lk_m2) {
 		int nAnimations = ptr->header.nAnimations;
 
 		//data
-		convert_IntAnimBlock(lk_m2.attachments[i].data,
+		convert_CharAnimBlock(lk_m2.attachments[i].data,
 				lk_m2.attachmentsanimofs[i].data, lk_m2.attachmentsdata[i].data,
 				&ptr->attachments[i].data, &ptr->attachmentsdata[i].data,
 				animations, nAnimations);
@@ -865,7 +937,7 @@ int attachments_converter(BCM2 *ptr, LKM2 lk_m2) {
 			ptr->attachmentsdata[i].data.times[0] = 0;
 			ptr->attachments[i].data.Times.n = 1;
 			ptr->attachments[i].data.Times.ofs = 0;
-			ptr->attachmentsdata[i].data.keys = malloc(sizeof(int));
+			ptr->attachmentsdata[i].data.keys = malloc(sizeof(char));
 			ptr->attachmentsdata[i].data.keys[0] = 1;
 			ptr->attachments[i].data.Keys.n = 1;
 			ptr->attachments[i].data.Keys.ofs = 0;

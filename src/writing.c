@@ -214,6 +214,16 @@ void write_ShortAnimBlock(FILE *bc_m2_file, AnimationBlock *ptrBlock,
 		align(bc_m2_file);
 	}
 }
+void write_CharAnimBlock(FILE *bc_m2_file, AnimationBlock *ptrBlock,
+		Char_SubBlock *ptrDataBlock) {
+	write_rangestimes(bc_m2_file, ptrBlock, &ptrDataBlock->ranges,
+			&ptrDataBlock->times);
+	if (ptrBlock->Keys.n > 0) {
+		ptrBlock->Keys.ofs = getPos(bc_m2_file);
+		fwrite(ptrDataBlock->keys, sizeof(char), ptrBlock->Keys.n, bc_m2_file);
+		align(bc_m2_file);
+	}
+}
 void write_FloatAnimBlock(FILE *bc_m2_file, AnimationBlock *ptrBlock,
 		Float_SubBlock *ptrDataBlock) {
 	write_rangestimes(bc_m2_file, ptrBlock, &ptrDataBlock->ranges,
@@ -359,7 +369,7 @@ int write_attachments(FILE *bc_m2_file, BCM2 *ptr) {
 		int i;
 		for (i = 0; i < ptr->header.nAttachments; i++) {
 			//data
-			write_IntAnimBlock(bc_m2_file, &ptr->attachments[i].data,
+			write_CharAnimBlock(bc_m2_file, &ptr->attachments[i].data,
 					&ptr->attachmentsdata[i].data);
 		}
 		fseek(bc_m2_file, ptr->header.ofsAttachments, SEEK_SET);
