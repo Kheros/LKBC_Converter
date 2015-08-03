@@ -1,6 +1,8 @@
 # LKBC_Converter
 Conversor de modelos M2 de World of Warcraft M2 de la versión 08 (_Wrath of the Lich King_) a la 07-04 (_The Burning Crusade_).
 Escrito en ANSI C, documentado con Doxygen, testeado con CuTest, hecho con amor y lágrimas.
+Básicamente, permite crear versiones de los M2 de WOTLK y pasarlos a TBC/Classic.
+También se pueden convertir los M2 de hasta Warlords Of Draenor, pero necesitan ser editados con Blender antes.
 
 ##Cómo usarlo
 Esto es una utilidad para la linea de comandos. El nombre del archivo convertido seguirá esta estructura: <model name>_BC.m2.
