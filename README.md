@@ -2,6 +2,15 @@
 Conversor de modelos M2 de World of Warcraft M2 de la versión 08 (_Wrath of the Lich King_) a la 07-04 (_The Burning Crusade_).
 Escrito en ANSI C, documentado con Doxygen, testeado con CuTest, hecho con amor y lágrimas.
 
+##Cómo usarlo
+Esto es una utilidad para la linea de comandos. El nombre del archivo convertido seguirá esta estructura: <model name>_BC.m2.
+
+###Ejemplo (versión para Windows)
+modelo original : PandarenStag.m2
+lkbc_converter.exe PandarenStag.m2
+
+Puede ser que también funcione arrastrar el archivo .m2 directamente en el lkbc_converter.exe.
+
 ##Qué queda por implementar :
 * Efectos "cinta" (rastros como el dee Al'ar)
 * Partículas (Spells, glowing effects..)
